@@ -2,6 +2,20 @@ from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 
+class TattooStyle(models.Model):
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    slug = models.SlugField(
+    max_length=120,
+    unique=True,
+   )
+
+    def __str__(self):
+        return self.name
+
 class ArtistProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -26,6 +40,12 @@ class ArtistProfile(models.Model):
         upload_to="artists/profile_images/",
         blank=True,
         null=True,
+    )
+
+    styles = models.ManyToManyField(
+    TattooStyle,
+    related_name="artists",
+    blank=True,
     )
 
     def clean(self):
