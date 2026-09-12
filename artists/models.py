@@ -11,7 +11,7 @@ class TattooStyle(models.Model):
     slug = models.SlugField(
     max_length=120,
     unique=True,
-   )
+    )
 
     def __str__(self):
         return self.name
@@ -43,9 +43,9 @@ class ArtistProfile(models.Model):
     )
 
     styles = models.ManyToManyField(
-    TattooStyle,
-    related_name="artists",
-    blank=True,
+        TattooStyle,
+        related_name="artists",
+        blank=True,
     )
 
     def clean(self):
@@ -60,3 +60,36 @@ class ArtistProfile(models.Model):
     
     def __str__(self):
         return self.studio_name or self.user.email
+
+class PortfolioItem(models.Model):
+    artist_profile = models.ForeignKey(
+        ArtistProfile,
+        on_delete=models.CASCADE,
+        related_name="portfolio",
+    )
+
+    image = models.ImageField(
+        upload_to="artists/portfolio/",
+    )
+
+    description = models.TextField(
+        blank=True,
+    )
+
+    title = models.CharField(
+        max_length=150,
+        blank=True,
+    )
+
+    styles = models.ManyToManyField(
+        TattooStyle,
+        related_name="portfolio_items",
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def __str__(self):
+        return self.title or f"Portfolio item #{self.pk}"

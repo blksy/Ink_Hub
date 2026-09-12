@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ArtistProfile, TattooStyle
+from .models import ArtistProfile, PortfolioItem, TattooStyle
 
 
 @admin.register(ArtistProfile)
@@ -34,3 +34,21 @@ class TattooStyleAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         "slug": ("name",),
     }
+
+@admin.register(PortfolioItem)
+class PortfolioItemAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "artist_profile",
+        "created_at",
+    )
+
+    search_fields = (
+        "title",
+        "artist_profile__user__email",
+        "artist_profile__studio_name",
+    )
+
+    filter_horizontal = ("styles",)
+
+    ordering = ("-created_at",)
