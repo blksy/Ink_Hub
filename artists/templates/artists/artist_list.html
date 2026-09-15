@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artyści | Artiva</title>
+  </head>
+
+  <body>
+    <h1>Artyści</h1>
+
+    {% for artist in artists %}
+    <article>
+      <a href="{% url 'artists:artist-detail' artist.pk %}">
+        {{ artist.studio_name|default:artist.user.email }}
+      </a>
+
+      <p>Lokalizacja: {{ artist.location }}</p>
+
+      <p>Style:</p>
+
+      <ul>
+        {% for style in artist.styles.all %}
+        <li>{{ style.name }}</li>
+        {% empty %}
+        <li>none</li>
+        {% endfor %}
+      </ul>
+    </article>
+    {% empty %}
+    <p>artists not found.</p>
+    {% endfor %}
+  </body>
+</html>

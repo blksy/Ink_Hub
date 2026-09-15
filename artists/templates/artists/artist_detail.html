@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ artist.studio_name }} | InkHub</title>
+  </head>
+
+  <body>
+    <h1>{{ artist.studio_name|default:artist.user.email }}</h1>
+
+    <p>Lokalizacja: {{ artist.location }}</p>
+
+    <h2>O artyście</h2>
+
+    {% if artist.bio %}
+    <p>{{ artist.bio }}</p>
+    {% else %}
+    <p>Artysta nie dodał jeszcze opisu.</p>
+    {% endif %}
+
+    <h2>Specjalizacje artysty</h2>
+
+    <ul>
+      {% for style in artist.styles.all %}
+      <li>{{ style.name }}</li>
+      {% empty %}
+      <li>Brak przypisanych stylów.</li>
+      {% endfor %}
+    </ul>
+
+    <h2>Portfolio</h2>
+
+    {% for item in artist.portfolio.all %}
+    <article>
+      <h3>{{ item.title }}</h3>
+
+      {% if item.image %}
+      <img src="{{ item.image.url }}" alt="{{ item.title }}" width="300" />
+      {% endif %} {% if item.description %}
+      <p>{{ item.description }}</p>
+      {% endif %}
+
+      <p>Styl wykonania:</p>
+
+      <ul>
+        {% for style in item.styles.all %}
+        <li>{{ style.name }}</li>
+        {% empty %}
+        <li>Brak przypisanych stylów.</li>
+        {% endfor %}
+      </ul>
+    </article>
+    {% empty %}
+    <p>Artysta nie dodał jeszcze prac do portfolio.</p>
+    {% endfor %}
+
+    <p>
+      <a href="{% url 'artists:artist-list' %}"> Powrót do listy artystów </a>
+    </p>
+  </body>
+</html>
