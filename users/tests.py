@@ -1,7 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 from django.test import TestCase
-
+from artists.models import ArtistProfile
+from .factories import UserFactory
+from .forms import UserRegistrationForm
 
 User = get_user_model()
 
@@ -73,3 +75,124 @@ class UserModelTests(TestCase):
                 password="adminpass123",
                 is_superuser=False,
             )
+
+class UserFactoryTests(TestCase):
+    def test_factory_creates_client(self):
+        user = UserFactory.create_user(
+            email="client@example.com",
+            password="testpass123",
+            role=User.Role.CLIENT,
+        )
+
+        self.assertEqual(user.email, "client@example.com")
+        self.assertEqual(user.role, User.Role.CLIENT)
+        self.assertTrue(
+            User.objects.filter(email="client@example.com").exists()
+        )
+
+    def test_factory_does_not_create_artist_profile_for_client(self):
+        user = UserFactory.create_user(
+            email="client@example.com",
+            password="testpass123",
+            role=User.Role.CLIENT,
+        )
+
+        self.assertFalse(
+            ArtistProfile.objects.filter(user=user).exists()
+        )
+
+    def test_factory_creates_artist_with_profile(self):
+        user = UserFactory.create_user(
+            email="artist@example.com",
+            password="testpass123",
+            role=User.Role.ARTIST,
+       )
+
+        self.assertEqual(user.role, User.Role.ARTIST)
+
+        self.assertTrue(
+            ArtistProfile.objects.filter(user=user).exists()
+       )
+
+    def test_factory_hashes_password(self):
+        user = UserFactory.create_user(
+            email="client@example.com",
+            password="testpass123",
+            role=User.Role.CLIENT,
+       )
+
+        self.assertNotEqual(user.password, "testpass123")
+        self.assertTrue(user.check_password("testpass123"))
+ 
+class UserRegistrationFormTests(TestCase):
+    def test_form_is_valid_with_correct_data(self):
+        form = UserRegistrationForm(
+            data={
+                "email": "newuser@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "InkHubTest2026!x",
+                "password2": "InkHubTest2026!x",
+            }
+        )
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_is_invalid_when_passwords_do_not_match(self):
+        form = UserRegistrationForm(
+            data={
+                "email": "newuser@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "InkHubTest2026!x",
+                "password2": "DifferentPassword2026!x",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn(
+            "Passwords do not match.",
+            form.non_field_errors(),
+        )
+
+    def test_form_rejects_weak_password(self):
+        form = UserRegistrationForm(
+            data={
+                "email": "newuser@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "123",
+                "password2": "123",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+
+    def test_form_rejects_duplicate_email(self):
+        User.objects.create_user(
+            email="existing@example.com",
+            password="ExistingTest2026!x",
+            role=User.Role.CLIENT,
+        )
+
+        form = UserRegistrationForm(
+            data={
+                "email": "existing@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "ArtivaTest2026!x",
+                "password2": "ArtivaTest2026!x",
+           }
+       )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
+
+    def test_form_requires_email(self):
+        form = UserRegistrationForm(
+            data={
+                "email": "",
+                "role": User.Role.CLIENT,
+                "password1": "ArtivaTest2026!x",
+                "password2": "ArtivaTest2026!x",
+           }
+       )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)
