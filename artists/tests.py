@@ -1,3 +1,6 @@
+import tempfile
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import override_settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
@@ -449,3 +452,69 @@ class ArtistProfileUpdateViewTests(TestCase):
             other_artist.studio_name,
             "Other Studio",
         )
+
+    def test_artist_can_update_styles(self):
+        style1 = TattooStyle.objects.create(
+            name="Blackwork",
+            slug="blackwork-test",
+        )
+        style2 = TattooStyle.objects.create(
+            name="Realism",
+            slug="realism-test",
+        )
+        self.client.force_login(self.artist_user)
+
+        response = self.client.post(
+            self.url,
+                data={
+                "studio_name": "Test Studio",
+                "bio": "Test bio",
+                "location": "Poznań",
+                "styles": [style1.pk, style2.pk],
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.artist.refresh_from_db()
+
+        self.assertEqual(
+            set(self.artist.styles.all()),
+            {style1, style2},
+        )
+    
+    def test_artist_can_update_profile_image(self):
+        image = SimpleUploadedFile(
+            name="profile.gif",
+            content=(
+                b"GIF87a\x01\x00\x01\x00\x80\x01\x00"
+                b"\x00\x00\x00ccc,\x00\x00\x00\x00"
+                b"\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
+            ),
+            content_type="image/gif",
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with override_settings(MEDIA_ROOT=temp_dir):
+                self.client.force_login(self.artist_user)
+
+                response = self.client.post(
+                    self.url,
+                    data={
+                        "studio_name": "Studio With Image",
+                        "bio": "Test bio",
+                       "location": "Poznań",
+                        "styles": [],
+                        "profile_image": image,
+                    },
+                )
+
+                self.assertEqual(response.status_code, 302)
+
+                self.artist.refresh_from_db()
+
+                self.assertTrue(self.artist.profile_image)
+                self.assertIn(
+                   "artists/profile_images/",
+                    self.artist.profile_image.name,
+                )
