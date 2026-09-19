@@ -4,6 +4,8 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.urls import reverse
 from .models import ArtistProfile, TattooStyle, PortfolioItem
+from .forms import ArtistProfileForm
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -273,3 +275,177 @@ class ArtistViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+class ArtistProfileFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="formartist@example.com",
+            password="ArtivaTest2026!x",
+            role=User.Role.ARTIST,
+        )
+
+        self.artist = ArtistProfile.objects.create(
+            user=self.user,
+        )
+
+        self.style = TattooStyle.objects.create(
+            name="Test Style",
+            slug="test-style",
+        )
+
+    def test_form_is_valid_with_correct_data(self):
+        form = ArtistProfileForm(
+            data={
+                "studio_name": "Black Moon Tattoo",
+                "bio": "Tattoo artist from Poznań.",
+                "location": "Poznań",
+                "styles": [self.style.pk],
+            },
+            instance=self.artist,
+        )
+
+        self.assertTrue(form.is_valid())
+
+    def test_form_does_not_expose_user_field(self):
+        form = ArtistProfileForm(
+            instance=self.artist
+        )
+
+        self.assertNotIn("user", form.fields)
+
+    def test_form_contains_expected_fields(self):
+        form = ArtistProfileForm(
+            instance=self.artist
+        )
+
+        self.assertEqual(
+            set(form.fields.keys()),
+            {
+                "studio_name",
+                "bio",
+                "location",
+                "profile_image",
+                "styles",
+            },
+        )
+
+class ArtistProfileUpdateViewTests(TestCase):
+    def setUp(self):
+        self.password = "ArtivaTest2026!x"
+
+        self.artist_user = User.objects.create_user(
+            email="artist-edit@example.com",
+            password=self.password,
+            role=User.Role.ARTIST,
+        )
+
+        self.artist = ArtistProfile.objects.create(
+            user=self.artist_user,
+            studio_name="Old Studio",
+            location="Poznań",
+        )
+
+        self.client_user = User.objects.create_user(
+            email="client@example.com",
+            password=self.password,
+            role=User.Role.CLIENT,
+        )
+
+        self.url = reverse("artists:artist-profile-edit")
+
+    def test_unauthenticated_user_is_redirected_to_login(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_client_cannot_edit_artist_profile(self):
+        self.client.force_login(self.client_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_artist_can_access_own_profile_edit_page(self):
+        self.client.force_login(self.artist_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "artists/artist_profile_edit.html",
+        )
+
+    def test_artist_can_update_own_profile(self):
+        self.client.force_login(self.artist_user)
+
+        response = self.client.post(
+            self.url,
+            data={
+                "studio_name": "New Studio",
+                "bio": "Updated bio",
+                "location": "Wrocław",
+                "styles": [],
+            },
+        )
+
+        self.artist.refresh_from_db()
+
+        self.assertEqual(
+            self.artist.studio_name,
+            "New Studio",
+        )
+        self.assertEqual(
+            self.artist.bio,
+            "Updated bio",
+        )
+        self.assertEqual(
+            self.artist.location,
+            "Wrocław",
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "artists:artist-detail",
+                kwargs={"pk": self.artist.pk},
+            ),
+        )
+
+    def test_artist_can_only_edit_own_profile(self):
+        other_user = User.objects.create_user(
+            email="otherartist@example.com",
+            password=self.password,
+            role=User.Role.ARTIST,
+        )
+
+        other_artist = ArtistProfile.objects.create(
+            user=other_user,
+            studio_name="Other Studio",
+            location="Warszawa",
+        )
+
+        self.client.force_login(self.artist_user)
+
+        response = self.client.post(
+            self.url,
+            data={
+                "studio_name": "My Updated Studio",
+                "bio": "My updated bio",
+                "location": "Poznań",
+                "styles": [],
+            },
+       )
+
+        self.artist.refresh_from_db()
+        other_artist.refresh_from_db()
+
+        self.assertEqual(
+            self.artist.studio_name,
+            "My Updated Studio",
+        )
+
+        self.assertEqual(
+            other_artist.studio_name,
+            "Other Studio",
+        )
