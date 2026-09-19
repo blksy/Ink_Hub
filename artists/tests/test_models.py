@@ -2,8 +2,8 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.test import TestCase
-from django.urls import reverse
-from .models import ArtistProfile, TattooStyle, PortfolioItem
+
+from artists.models import ArtistProfile, PortfolioItem, TattooStyle
 
 User = get_user_model()
 
@@ -220,56 +220,3 @@ class PortfolioItemModelTests(TestCase):
     )
 
         self.assertEqual(str(item), "Blackwork sleeve")
-
-class ArtistViewTests(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            email="viewartist@example.com",
-            password="testpass123",
-            role=User.Role.ARTIST,
-        )
-
-        self.profile = ArtistProfile.objects.create(
-            user=self.user,
-            studio_name="Black Clover Tattoo",
-            location="Poznań",
-            bio="Tattoo artist from Poznań.",
-        )
-
-    def test_artist_list_view_returns_200(self):
-        response = self.client.get(
-            reverse("artists:artist-list")
-        )
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_artist_list_view_uses_correct_template(self):
-        response = self.client.get(
-            reverse("artists:artist-list")
-        )
-
-        self.assertTemplateUsed(
-            response,
-            "artists/artist_list.html",
-        )
-
-    def test_artist_list_contains_artist(self):
-        response = self.client.get(
-            reverse("artists:artist-list")
-        )
-
-        self.assertContains(
-            response,
-            "Black Clover Tattoo",
-        )
-
-    def test_artist_detail_view_returns_200(self):
-        response = self.client.get(
-            reverse(
-                "artists:artist-detail",
-                kwargs={"pk": self.profile.pk},
-            )
-        )
-
-        self.assertEqual(response.status_code, 200)
