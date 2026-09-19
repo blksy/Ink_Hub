@@ -276,3 +276,73 @@ class RegisterViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+class AuthenticationViewTests(TestCase):
+    def setUp(self):
+        self.password = "ArtivaTest2026!x"
+        self.user = User.objects.create_user(
+            email="login@example.com",
+            password=self.password,
+            role=User.Role.CLIENT,
+        )
+
+    def test_user_can_login_with_email(self):
+        response = self.client.post(
+            reverse("users:login"),
+            data={
+                "username": "login@example.com",
+                "password": self.password,
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("artists:artist-list"),
+        )
+
+        self.assertTrue(
+            "_auth_user_id" in self.client.session
+        )
+
+    def test_invalid_login_does_not_authenticate_user(self):
+        response = self.client.post(
+            reverse("users:login"),
+            data={
+                "username": "login@example.com",
+                "password": "WrongPassword123!",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(
+            "_auth_user_id" in self.client.session
+        )
+
+    def test_user_can_logout(self):
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("users:logout")
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("users:login"),
+        )
+
+        self.assertFalse(
+            "_auth_user_id" in self.client.session
+        )
+
+    def test_authenticated_user_cannot_access_register(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse("users:register")
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("artists:artist-list"),
+        )
