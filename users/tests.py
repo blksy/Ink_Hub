@@ -4,6 +4,7 @@ from django.test import TestCase
 from artists.models import ArtistProfile
 from .factories import UserFactory
 from .forms import UserRegistrationForm
+from django.urls import reverse
 
 User = get_user_model()
 
@@ -196,3 +197,82 @@ class UserRegistrationFormTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("email", form.errors)
+
+class RegisterViewTests(TestCase):
+    def test_register_view_returns_200(self):
+        response = self.client.get(
+            reverse("users:register")
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_register_view_uses_correct_template(self):
+        response = self.client.get(
+            reverse("users:register")
+        )
+
+        self.assertTemplateUsed(
+            response,
+            "users/register.html",
+        )
+
+    def test_register_client_creates_user(self):
+        response = self.client.post(
+            reverse("users:register"),
+            data={
+                "email": "newclient@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "ArtivaTest2026!x",
+                "password2": "ArtivaTest2026!x",
+            },
+        )
+
+        self.assertTrue(
+            User.objects.filter(
+                email="newclient@example.com"
+            ).exists()
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_register_artist_creates_user_and_artist_profile(self):
+        response = self.client.post(
+            reverse("users:register"),
+            data={
+                "email": "newartist@example.com",
+                "role": User.Role.ARTIST,
+                "password1": "ArtivaTest2026!x",
+                "password2": "ArtivaTest2026!x",
+            },
+        )
+
+        user = User.objects.get(
+            email="newartist@example.com"
+        )
+
+        self.assertEqual(user.role, User.Role.ARTIST)
+
+        self.assertTrue(
+            ArtistProfile.objects.filter(user=user).exists()
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_invalid_registration_does_not_create_user(self):
+        response = self.client.post(
+            reverse("users:register"),
+            data={
+                "email": "invalid@example.com",
+                "role": User.Role.CLIENT,
+                "password1": "ArtivaTest2026!x",
+                "password2": "DifferentPassword2026!x",
+            },
+        )
+
+        self.assertFalse(
+            User.objects.filter(
+                email="invalid@example.com"
+            ).exists()
+        )
+
+        self.assertEqual(response.status_code, 200)
