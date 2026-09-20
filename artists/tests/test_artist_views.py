@@ -65,7 +65,7 @@ class ArtistViewTests(TestCase):
 
 class ArtistProfileUpdateViewTests(TestCase):
     def setUp(self):
-        self.password = "ArtivaTest2026!x"
+        self.password =  "InkHubTest2026!x"
 
         self.artist_user = User.objects.create_user(
             email="artist-edit@example.com",

@@ -58,8 +58,8 @@ class UserRegistrationFormTests(TestCase):
             data={
                 "email": "existing@example.com",
                 "role": User.Role.CLIENT,
-                "password1": "ArtivaTest2026!x",
-                "password2": "ArtivaTest2026!x",
+                "password1": "InkHubTest2026!x",
+                "password2": "InkHubTest2026!x",
            }
        )
 
@@ -71,8 +71,8 @@ class UserRegistrationFormTests(TestCase):
             data={
                 "email": "",
                 "role": User.Role.CLIENT,
-                "password1": "ArtivaTest2026!x",
-                "password2": "ArtivaTest2026!x",
+                "password1": "InkHubTest2026!x",
+                "password2": "InkHubTest2026!x",
            }
        )
 

@@ -27,8 +27,10 @@ class RegisterView(FormView):
 
         return super().form_valid(form)
    
+
 class UserLoginView(LoginView):
     template_name = "users/login.html"
+
 
 class UserLogoutView(LogoutView):
     pass

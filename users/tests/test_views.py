@@ -31,8 +31,8 @@ class RegisterViewTests(TestCase):
             data={
                 "email": "newclient@example.com",
                 "role": User.Role.CLIENT,
-                "password1": "ArtivaTest2026!x",
-                "password2": "ArtivaTest2026!x",
+                "password1": "InkHubTest2026!x",
+                "password2": "InkHubTest2026!x",
             },
         )
 
@@ -50,8 +50,8 @@ class RegisterViewTests(TestCase):
             data={
                 "email": "newartist@example.com",
                 "role": User.Role.ARTIST,
-                "password1": "ArtivaTest2026!x",
-                "password2": "ArtivaTest2026!x",
+                "password1": "InkHubTest2026!x",
+                "password2": "InkHubTest2026!x",
             },
         )
 
@@ -73,7 +73,7 @@ class RegisterViewTests(TestCase):
             data={
                 "email": "invalid@example.com",
                 "role": User.Role.CLIENT,
-                "password1": "ArtivaTest2026!x",
+                "password1": "InkHubTest2026!x",
                 "password2": "DifferentPassword2026!x",
             },
         )
@@ -88,7 +88,7 @@ class RegisterViewTests(TestCase):
 
 class AuthenticationViewTests(TestCase):
     def setUp(self):
-        self.password = "ArtivaTest2026!x"
+        self.password = "InkHubTest2026!x"
         self.user = User.objects.create_user(
             email="login@example.com",
             password=self.password,

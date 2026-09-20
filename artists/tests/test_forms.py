@@ -10,7 +10,7 @@ class ArtistProfileFormTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email="formartist@example.com",
-            password="ArtivaTest2026!x",
+            password="InkHubTest2026!x",
             role=User.Role.ARTIST,
         )
 
@@ -59,11 +59,12 @@ class ArtistProfileFormTests(TestCase):
             },
         )
 
+
 class PortfolioItemFormTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email="portfolio-form@example.com",
-            password="ArtivaTest2026!x",
+            password="InkHubTest2026!x",
             role=User.Role.ARTIST,
         )
 

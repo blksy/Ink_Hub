@@ -16,6 +16,7 @@ class TattooStyle(models.Model):
     def __str__(self):
         return self.name
 
+
 class ArtistProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -60,6 +61,7 @@ class ArtistProfile(models.Model):
     
     def __str__(self):
         return self.studio_name or self.user.email
+
 
 class PortfolioItem(models.Model):
     artist_profile = models.ForeignKey(
