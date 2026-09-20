@@ -2,15 +2,15 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Edytuj profil | InkHub</title>
+    <title>Dodaj pracę | InkHub</title>
   </head>
   <body>
-    <h1>Edytuj profil artysty</h1>
+    <h1>Dodaj pracę do portfolio</h1>
 
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %} {{ form.as_p }}
 
-      <button type="submit">Zapisz zmiany</button>
+      <button type="submit">Dodaj do portfolio</button>
     </form>
   </body>
 </html>

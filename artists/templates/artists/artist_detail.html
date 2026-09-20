@@ -13,49 +13,82 @@
     <h2>O artyście</h2>
 
     {% if artist.bio %}
-    <p>{{ artist.bio }}</p>
+      <p>{{ artist.bio }}</p>
     {% else %}
-    <p>Artysta nie dodał jeszcze opisu.</p>
+      <p>Artysta nie dodał jeszcze opisu.</p>
     {% endif %}
 
     <h2>Specjalizacje artysty</h2>
 
     <ul>
       {% for style in artist.styles.all %}
-      <li>{{ style.name }}</li>
+        <li>{{ style.name }}</li>
       {% empty %}
-      <li>Brak przypisanych stylów.</li>
+        <li>Brak przypisanych stylów.</li>
       {% endfor %}
     </ul>
 
+    <hr />
+
     <h2>Portfolio</h2>
 
-    {% for item in artist.portfolio.all %}
-    <article>
-      <h3>{{ item.title }}</h3>
+    {% if user.is_authenticated and user == artist.user %}
+      <p>
+        <a href="{% url 'artists:portfolio-item-create' %}">
+          Dodaj pracę
+        </a>
+      </p>
+    {% endif %}
 
-      {% if item.image %}
-      <img src="{{ item.image.url }}" alt="{{ item.title }}" width="300" />
-      {% endif %} {% if item.description %}
-      <p>{{ item.description }}</p>
-      {% endif %}
+    {% if artist.portfolio.all %}
+      {% for item in artist.portfolio.all %}
+        <div>
+          {% if item.image %}
+            <img
+              src="{{ item.image.url }}"
+              alt="{{ item.title }}"
+              width="300"
+            />
+          {% endif %}
 
-      <p>Styl wykonania:</p>
+          <h3>{{ item.title }}</h3>
 
-      <ul>
-        {% for style in item.styles.all %}
-        <li>{{ style.name }}</li>
-        {% empty %}
-        <li>Brak przypisanych stylów.</li>
-        {% endfor %}
-      </ul>
-    </article>
-    {% empty %}
-    <p>Artysta nie dodał jeszcze prac do portfolio.</p>
-    {% endfor %}
+          {% if item.description %}
+            <p>{{ item.description }}</p>
+          {% endif %}
+
+          {% if item.styles.all %}
+            <p>
+              Style:
+              {% for style in item.styles.all %}
+                {{ style.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+          {% endif %}
+
+          {% if user.is_authenticated and user == artist.user %}
+            <p>
+              <a href="{% url 'artists:portfolio-item-update' item.pk %}">
+                Edytuj
+              </a>
+
+              <a href="{% url 'artists:portfolio-item-delete' item.pk %}">
+                Usuń
+              </a>
+            </p>
+          {% endif %}
+        </div>
+
+        <hr />
+      {% endfor %}
+    {% else %}
+      <p>Ten artysta nie dodał jeszcze żadnych prac.</p>
+    {% endif %}
 
     <p>
-      <a href="{% url 'artists:artist-list' %}"> Powrót do listy artystów </a>
+      <a href="{% url 'artists:artist-list' %}">
+        Powrót do listy artystów
+      </a>
     </p>
   </body>
 </html>

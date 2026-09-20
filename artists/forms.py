@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ArtistProfile
+from .models import ArtistProfile, PortfolioItem
 
 
 class ArtistProfileForm(forms.ModelForm):
@@ -11,5 +11,16 @@ class ArtistProfileForm(forms.ModelForm):
             "bio",
             "location",
             "profile_image",
+            "styles",
+        )
+
+
+class PortfolioItemForm(forms.ModelForm):
+    class Meta:
+        model = PortfolioItem
+        fields = (
+            "title",
+            "description",
+            "image",
             "styles",
         )

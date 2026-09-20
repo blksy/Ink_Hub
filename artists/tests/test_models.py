@@ -135,6 +135,7 @@ class ArtistProfileModelTests(TestCase):
         self.assertEqual(style.slug, "fine-line")
         self.assertEqual(str(style), "Fine Line")
 
+
 class PortfolioItemModelTests(TestCase):
 
     def setUp(self):
