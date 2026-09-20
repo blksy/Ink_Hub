@@ -3,12 +3,14 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+
 from artists.models import ArtistProfile, TattooStyle
+
 
 User = get_user_model()
 
-class ArtistViewTests(TestCase):
 
+class ArtistViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email="viewartist@example.com",
@@ -59,7 +61,6 @@ class ArtistViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-
 
 
 class ArtistProfileUpdateViewTests(TestCase):

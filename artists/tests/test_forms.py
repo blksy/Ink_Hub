@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from artists.forms import ArtistProfileForm
-from artists.models import ArtistProfile, TattooStyle
+from artists.forms import ArtistProfileForm, PortfolioItemForm
+from artists.models import ArtistProfile, TattooStyle, PortfolioItem
 
 User = get_user_model()
 
@@ -57,4 +57,42 @@ class ArtistProfileFormTests(TestCase):
                 "profile_image",
                 "styles",
             },
+        )
+
+class PortfolioItemFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="portfolio-form@example.com",
+            password="ArtivaTest2026!x",
+            role=User.Role.ARTIST,
+        )
+
+        self.artist = ArtistProfile.objects.create(
+            user=self.user,
+        )
+
+        self.style = TattooStyle.objects.create(
+            name="Blackwork",
+            slug="blackwork-form-test",
+        )
+
+    def test_form_contains_expected_fields(self):
+        form = PortfolioItemForm()
+
+        self.assertEqual(
+            set(form.fields.keys()),
+            {
+                "title",
+                "description",
+                "image",
+                "styles",
+            },
+        )
+
+    def test_form_does_not_expose_artist_profile(self):
+        form = PortfolioItemForm()
+
+        self.assertNotIn(
+            "artist_profile",
+            form.fields,
         )
