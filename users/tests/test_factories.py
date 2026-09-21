@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from artists.models import ArtistProfile
+from artists.models import ProfessionalProfile
 from users.factories import UserFactory
 
 
@@ -22,7 +22,7 @@ class UserFactoryTests(TestCase):
             User.objects.filter(email="client@example.com").exists()
         )
 
-    def test_factory_does_not_create_artist_profile_for_client(self):
+    def test_factory_does_not_create_professional_profile_for_client(self):
         user = UserFactory.create_user(
             email="client@example.com",
             password="testpass123",
@@ -30,20 +30,20 @@ class UserFactoryTests(TestCase):
         )
 
         self.assertFalse(
-            ArtistProfile.objects.filter(user=user).exists()
+            ProfessionalProfile.objects.filter(user=user).exists()
         )
 
-    def test_factory_creates_artist_with_profile(self):
+    def test_factory_creates_professional_with_profile(self):
         user = UserFactory.create_user(
             email="artist@example.com",
             password="testpass123",
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
        )
 
-        self.assertEqual(user.role, User.Role.ARTIST)
+        self.assertEqual(user.role, User.Role.PROFESSIONAL)
 
         self.assertTrue(
-            ArtistProfile.objects.filter(user=user).exists()
+            ProfessionalProfile.objects.filter(user=user).exists()
        )
 
     def test_factory_hashes_password(self):

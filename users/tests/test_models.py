@@ -19,14 +19,14 @@ class UserModelTests(TestCase):
         self.assertFalse(user.is_staff)
         self.assertFalse(user.is_superuser)
 
-    def test_create_artist_user(self):
+    def test_create_professional_user(self):
         user = User.objects.create_user(
             email="artist@example.com",
             password="testpass123",
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        self.assertEqual(user.role, User.Role.ARTIST)
+        self.assertEqual(user.role, User.Role.PROFESSIONAL)
 
     def test_create_user_without_email_raises_error(self):
         with self.assertRaises(ValueError):

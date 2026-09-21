@@ -1,10 +1,10 @@
 from django.contrib import admin
 
-from .models import ArtistProfile, PortfolioItem, TattooStyle
+from .models import ProfessionalProfile, PortfolioItem, TattooStyle
 
 
-@admin.register(ArtistProfile)
-class ArtistProfileAdmin(admin.ModelAdmin):
+@admin.register(ProfessionalProfile)
+class ProfessionalProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
         "studio_name",
@@ -39,14 +39,14 @@ class TattooStyleAdmin(admin.ModelAdmin):
 class PortfolioItemAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "artist_profile",
+        "professional_profile",
         "created_at",
     )
 
     search_fields = (
         "title",
-        "artist_profile__user__email",
-        "artist_profile__studio_name",
+        "professional_profile__user__email",
+        "professional_profile__studio_name",
     )
 
     filter_horizontal = ("styles",)

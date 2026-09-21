@@ -14,7 +14,7 @@ class RegisterView(FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("artists:artist-list")
+            return redirect("professionals:professional-list")
 
         return super().dispatch(request, *args, **kwargs)
 

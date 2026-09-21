@@ -17,11 +17,11 @@ class TattooStyle(models.Model):
         return self.name
 
 
-class ArtistProfile(models.Model):
+class ProfessionalProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="artist_profile",
+        related_name="professional_profile",
     )
     studio_name = models.CharField(
         max_length=150,
@@ -38,21 +38,21 @@ class ArtistProfile(models.Model):
     )
 
     profile_image = models.ImageField(
-        upload_to="artists/profile_images/",
+        upload_to="professionals/profile_images/",
         blank=True,
         null=True,
     )
 
     styles = models.ManyToManyField(
         TattooStyle,
-        related_name="artists",
+        related_name="professionals",
         blank=True,
     )
 
     def clean(self):
-        if self.user.role != self.user.Role.ARTIST:
+        if self.user.role != self.user.Role.PROFESSIONAL:
             raise ValidationError(
-                "Artist profile can only be created for users with ARTIST role."
+                "Professional profile can only be created for users with PROFESSIONAL role."
             )
 
     def save(self, *args, **kwargs):
@@ -64,14 +64,14 @@ class ArtistProfile(models.Model):
 
 
 class PortfolioItem(models.Model):
-    artist_profile = models.ForeignKey(
-        ArtistProfile,
+    professional_profile = models.ForeignKey(
+        ProfessionalProfile,
         on_delete=models.CASCADE,
         related_name="portfolio",
     )
 
     image = models.ImageField(
-        upload_to="artists/portfolio/",
+        upload_to="professionals/portfolio/",
     )
 
     description = models.TextField(

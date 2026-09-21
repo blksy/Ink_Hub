@@ -28,12 +28,12 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     class Role(models.TextChoices):
         CLIENT = "CLIENT", "Client"
-        ARTIST = "ARTIST", "Artist"
+        PROFESSIONAL = "PROFESSIONAL", "Professional"
 
     username = None
     email = models.EmailField(unique=True)
     role = models.CharField(
-        max_length=10,
+        max_length=20,
         choices=Role.choices,
         default=Role.CLIENT,
     )

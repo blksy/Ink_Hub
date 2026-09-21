@@ -2,18 +2,18 @@
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>{{ artist.studio_name }} | InkHub</title>
+    <title>{{ professional.studio_name }} | InkHub</title>
   </head>
 
   <body>
-    <h1>{{ artist.studio_name|default:artist.user.email }}</h1>
+    <h1>{{ professional.studio_name|default:professional.user.email }}</h1>
 
-    <p>Lokalizacja: {{ artist.location }}</p>
+    <p>Lokalizacja: {{ professional.location }}</p>
 
     <h2>O artyście</h2>
 
-    {% if artist.bio %}
-      <p>{{ artist.bio }}</p>
+    {% if professional.bio %}
+      <p>{{ professional.bio }}</p>
     {% else %}
       <p>Artysta nie dodał jeszcze opisu.</p>
     {% endif %}
@@ -21,7 +21,7 @@
     <h2>Specjalizacje artysty</h2>
 
     <ul>
-      {% for style in artist.styles.all %}
+      {% for style in professional.styles.all %}
         <li>{{ style.name }}</li>
       {% empty %}
         <li>Brak przypisanych stylów.</li>
@@ -32,16 +32,16 @@
 
     <h2>Portfolio</h2>
 
-    {% if user.is_authenticated and user == artist.user %}
+    {% if user.is_authenticated and user == professional.user %}
       <p>
-        <a href="{% url 'artists:portfolio-item-create' %}">
+        <a href="{% url 'professionals:portfolio-item-create' %}">
           Dodaj pracę
         </a>
       </p>
     {% endif %}
 
-    {% if artist.portfolio.all %}
-      {% for item in artist.portfolio.all %}
+    {% if professional.portfolio.all %}
+      {% for item in professional.portfolio.all %}
         <div>
           {% if item.image %}
             <img
@@ -66,13 +66,13 @@
             </p>
           {% endif %}
 
-          {% if user.is_authenticated and user == artist.user %}
+          {% if user.is_authenticated and user == professional.user %}
             <p>
-              <a href="{% url 'artists:portfolio-item-update' item.pk %}">
+              <a href="{% url 'professionals:portfolio-item-update' item.pk %}">
                 Edytuj
               </a>
 
-              <a href="{% url 'artists:portfolio-item-delete' item.pk %}">
+              <a href="{% url 'professionals:portfolio-item-delete' item.pk %}">
                 Usuń
               </a>
             </p>
@@ -86,7 +86,7 @@
     {% endif %}
 
     <p>
-      <a href="{% url 'artists:artist-list' %}">
+      <a href="{% url 'professionals:professional-list' %}">
         Powrót do listy artystów
       </a>
     </p>

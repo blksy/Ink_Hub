@@ -132,5 +132,5 @@ AUTH_USER_MODEL = "users.User"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
-LOGIN_REDIRECT_URL = "artists:artist-list"
+LOGIN_REDIRECT_URL = "professionals:professional-list"
 LOGOUT_REDIRECT_URL = "users:login"

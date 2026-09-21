@@ -1,11 +1,11 @@
 from django import forms
 
-from .models import ArtistProfile, PortfolioItem
+from .models import ProfessionalProfile, PortfolioItem
 
 
-class ArtistProfileForm(forms.ModelForm):
+class ProfessionalProfileForm(forms.ModelForm):
     class Meta:
-        model = ArtistProfile
+        model = ProfessionalProfile
         fields = (
             "studio_name",
             "bio",

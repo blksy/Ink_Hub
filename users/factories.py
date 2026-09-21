@@ -1,4 +1,4 @@
-from artists.models import ArtistProfile
+from artists.models import ProfessionalProfile
 from django.db import transaction
 from .models import User
 
@@ -13,7 +13,7 @@ class UserFactory:
             role=role,
         )
 
-        if role == User.Role.ARTIST:
-            ArtistProfile.objects.create(user=user)
+        if role == User.Role.PROFESSIONAL:
+            ProfessionalProfile.objects.create(user=user)
 
         return user
