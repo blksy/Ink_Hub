@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import ArtistProfile, PortfolioItem
+from artists.models import ProfessionalProfile, PortfolioItem
 
 
 User = get_user_model()
@@ -13,36 +13,36 @@ class ArtistViewTests(TestCase):
         self.user = User.objects.create_user(
             email="viewartist@example.com",
             password="testpass123",
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        self.profile = ArtistProfile.objects.create(
+        self.profile = ProfessionalProfile.objects.create(
             user=self.user,
             studio_name="Black Clover Tattoo",
             location="Poznań",
             bio="Tattoo artist from Poznań.",
         )
 
-    def test_artist_list_view_returns_200(self):
+    def test_professional_list_view_returns_200(self):
         response = self.client.get(
-            reverse("artists:artist-list")
+            reverse("professionals:professional-list")
         )
 
         self.assertEqual(response.status_code, 200)
 
-    def test_artist_list_view_uses_correct_template(self):
+    def test_professional_list_view_uses_correct_template(self):
         response = self.client.get(
-            reverse("artists:artist-list")
+            reverse("professionals:professional-list")
         )
 
         self.assertTemplateUsed(
             response,
-            "artists/artist_list.html",
+            "professionals/professional_list.html",
         )
 
-    def test_artist_list_contains_artist(self):
+    def test_professional_list_contains_professional(self):
         response = self.client.get(
-            reverse("artists:artist-list")
+            reverse("professionals:professional-list")
         )
 
         self.assertContains(
@@ -50,27 +50,27 @@ class ArtistViewTests(TestCase):
             "Black Clover Tattoo",
         )
 
-    def test_artist_detail_view_returns_200(self):
+    def test_professional_detail_view_returns_200(self):
         response = self.client.get(
             reverse(
-                "artists:artist-detail",
+                "professionals:professional-detail",
                 kwargs={"pk": self.profile.pk},
             )
         )
 
         self.assertEqual(response.status_code, 200)
     
-    def test_artist_detail_displays_portfolio_item(self):
+    def test_professional_detail_displays_portfolio_item(self):
         portfolio_item = PortfolioItem.objects.create(
-            artist_profile=self.profile,
+            professional_profile=self.profile,
             title="Blackwork Sleeve",
             description="Full sleeve tattoo.",
-            image="artists/portfolio/test.jpg",
+            image="professionals/portfolio/test.jpg",
         )
 
         response = self.client.get(
             reverse(
-                "artists:artist-detail",
+                "professionals:professional-detail",
                 kwargs={"pk": self.profile.pk},
             )
         )
@@ -79,18 +79,18 @@ class ArtistViewTests(TestCase):
         self.assertContains(response, portfolio_item.title)
         self.assertContains(response, portfolio_item.description)
 
-    def test_artist_sees_portfolio_management_links_on_own_profile(self):
+    def test_professional_sees_portfolio_management_links_on_own_profile(self):
         portfolio_item = PortfolioItem.objects.create(
-            artist_profile=self.profile,
+            professional_profile=self.profile,
             title="Blackwork Sleeve",
-            image="artists/portfolio/test.jpg",
+            image="professionals/portfolio/test.jpg",
         )
 
         self.client.force_login(self.user)
 
         response = self.client.get(
             reverse(
-                "artists:artist-detail",
+                "professionals:professional-detail",
                 kwargs={"pk": self.profile.pk},
             )
         )
@@ -102,32 +102,32 @@ class ArtistViewTests(TestCase):
         self.assertContains(
             response,
             reverse(
-                "artists:portfolio-item-update",
+                "professionals:portfolio-item-update",
                 kwargs={"pk": portfolio_item.pk},
             ),
         )
         self.assertContains(
             response,
             reverse(
-                "artists:portfolio-item-delete",
+                "professionals:portfolio-item-delete",
                 kwargs={"pk": portfolio_item.pk},
             ),
         )
 
-    def test_other_artist_does_not_see_portfolio_management_links(self):
+    def test_other_professional_does_not_see_portfolio_management_links(self):
         portfolio_item = PortfolioItem.objects.create(
-            artist_profile=self.profile,
+            professional_profile=self.profile,
             title="Blackwork Sleeve",
-            image="artists/portfolio/test.jpg",
+            image="professionals/portfolio/test.jpg",
         )
 
         other_user = User.objects.create_user(
             email="other-viewer@example.com",
             password="InkHubTest2026!x",
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        ArtistProfile.objects.create(
+        ProfessionalProfile.objects.create(
             user=other_user,
             studio_name="Other Studio",
         )
@@ -136,7 +136,7 @@ class ArtistViewTests(TestCase):
 
         response = self.client.get(
             reverse(
-                "artists:artist-detail",
+                "professionals:professional-detail",
                 kwargs={"pk": self.profile.pk},
             )
         )
@@ -150,14 +150,14 @@ class ArtistViewTests(TestCase):
         self.assertNotContains(
             response,
             reverse(
-                "artists:portfolio-item-update",
+                "professionals:portfolio-item-update",
                 kwargs={"pk": portfolio_item.pk},
             ),
         )
         self.assertNotContains(
             response,
             reverse(
-                "artists:portfolio-item-delete",
+                "professionals:portfolio-item-delete",
                 kwargs={"pk": portfolio_item.pk},
             ),
         )

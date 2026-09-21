@@ -3,7 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import ArtistProfile, PortfolioItem, TattooStyle
+from artists.models import ProfessionalProfile, PortfolioItem, TattooStyle
 
 
 User = get_user_model()
@@ -13,14 +13,14 @@ class PortfolioItemUpdateViewTests(TestCase):
     def setUp(self):
         self.password = "InkHubTest2026!x"
 
-        self.artist_user = User.objects.create_user(
+        self.professional_user = User.objects.create_user(
             email="portfolio-update@example.com",
             password=self.password,
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        self.artist = ArtistProfile.objects.create(
-            user=self.artist_user,
+        self.professional = ProfessionalProfile.objects.create(
+            user=self.professional_user,
             studio_name="Update Studio",
         )
 
@@ -35,7 +35,7 @@ class PortfolioItemUpdateViewTests(TestCase):
         )
 
         self.portfolio_item = PortfolioItem.objects.create(
-            artist_profile=self.artist,
+            professional_profile=self.professional,
             title="Old Title",
             description="Old description",
             image=image,
@@ -48,7 +48,7 @@ class PortfolioItemUpdateViewTests(TestCase):
         )
 
         self.url = reverse(
-            "artists:portfolio-item-update",
+            "professionals:portfolio-item-update",
             kwargs={"pk": self.portfolio_item.pk},
         )
 
@@ -66,20 +66,20 @@ class PortfolioItemUpdateViewTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
 
-    def test_artist_can_access_own_portfolio_item(self):
-        self.client.force_login(self.artist_user)
+    def test_professional_can_access_own_portfolio_item(self):
+        self.client.force_login(self.professional_user)
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response,
-            "artists/portfolio_item_form.html",
+            "professionals/portfolio_item_form.html",
         )
 
 
-    def test_artist_can_update_own_portfolio_item(self):
-        self.client.force_login(self.artist_user)
+    def test_professional_can_update_own_portfolio_item(self):
+        self.client.force_login(self.professional_user)
 
         response = self.client.post(
             self.url,
@@ -103,30 +103,30 @@ class PortfolioItemUpdateViewTests(TestCase):
             "Updated description",
         )
 
-    def test_artist_cannot_update_another_artists_portfolio_item(self):
+    def test_professional_cannot_update_another_professionals_portfolio_item(self):
         other_user = User.objects.create_user(
             email="other-portfolio-artist@example.com",
             password=self.password,
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        other_artist = ArtistProfile.objects.create(
+        other_professional = ProfessionalProfile.objects.create(
             user=other_user,
             studio_name="Other Studio",
         )
 
         other_item = PortfolioItem.objects.create(
-            artist_profile=other_artist,
-            title="Other Artist Tattoo",
+            professional_profile=other_professional,
+            title="Other Professional Tattoo",
             description="Should not be changed.",
         )
 
         url = reverse(
-            "artists:portfolio-item-update",
+            "professionals:portfolio-item-update",
             kwargs={"pk": other_item.pk},
         )
 
-        self.client.force_login(self.artist_user)
+        self.client.force_login(self.professional_user)
 
         response = self.client.post(
             url,

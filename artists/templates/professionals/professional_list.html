@@ -11,18 +11,18 @@
       {% csrf_token %}
       <button type="submit">Wyloguj się</button>
     </form>
-    {% for artist in artists %}
+    {% for professional in professionals %}
     <article>
-      <a href="{% url 'artists:artist-detail' artist.pk %}">
-        {{ artist.studio_name|default:artist.user.email }}
+      <a href="{% url 'professionals:professional-detail' professional.pk %}">
+        {{ professional.studio_name|default:professional.user.email }}
       </a>
 
-      <p>Lokalizacja: {{ artist.location }}</p>
+      <p>Lokalizacja: {{ professional.location }}</p>
 
       <p>Style:</p>
 
       <ul>
-        {% for style in artist.styles.all %}
+        {% for style in professional.styles.all %}
         <li>{{ style.name }}</li>
         {% empty %}
         <li>none</li>

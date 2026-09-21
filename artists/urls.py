@@ -1,15 +1,15 @@
 from django.urls import path
 
-from .views import ArtistListView, ArtistDetailView, ArtistProfileUpdateView, PortfolioItemCreateView, PortfolioItemDeleteView, PortfolioItemUpdateView
+from .views import ProfessionalListView, ProfessionalDetailView, ProfessionalProfileUpdateView, PortfolioItemCreateView, PortfolioItemDeleteView, PortfolioItemUpdateView
 
 
-app_name = "artists"
+app_name = "professionals"
 
 urlpatterns = [
-    path("", ArtistListView.as_view(), name="artist-list"),
-    path("profile/edit/", ArtistProfileUpdateView.as_view(), name="artist-profile-edit"),
+    path("", ProfessionalListView.as_view(), name="professional-list"),
+    path("profile/edit/", ProfessionalProfileUpdateView.as_view(), name="professional-profile-edit"),
     path("portfolio/add/", PortfolioItemCreateView.as_view(), name="portfolio-item-create"),
     path("portfolio/<int:pk>/edit/",PortfolioItemUpdateView.as_view(),name="portfolio-item-update"),
     path("portfolio/<int:pk>/delete/", PortfolioItemDeleteView.as_view(), name="portfolio-item-delete"),
-    path("<int:pk>/", ArtistDetailView.as_view(), name="artist-detail"),
+    path("<int:pk>/", ProfessionalDetailView.as_view(), name="professional-detail"),
 ]

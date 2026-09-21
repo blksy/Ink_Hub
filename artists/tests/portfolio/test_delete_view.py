@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import ArtistProfile, PortfolioItem
+from artists.models import ProfessionalProfile, PortfolioItem
 
 
 User = get_user_model()
@@ -12,19 +12,19 @@ class PortfolioItemDeleteViewTests(TestCase):
     def setUp(self):
         self.password = "InkHubTest2026!x"
 
-        self.artist_user = User.objects.create_user(
+        self.professional_user = User.objects.create_user(
             email="portfolio-delete@example.com",
             password=self.password,
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        self.artist = ArtistProfile.objects.create(
-            user=self.artist_user,
+        self.professional = ProfessionalProfile.objects.create(
+            user=self.professional_user,
             studio_name="Delete Studio",
         )
 
         self.portfolio_item = PortfolioItem.objects.create(
-            artist_profile=self.artist,
+            professional_profile=self.professional,
             title="Tattoo to delete",
             description="This item will be deleted.",
         )
@@ -36,7 +36,7 @@ class PortfolioItemDeleteViewTests(TestCase):
         )
 
         self.url = reverse(
-            "artists:portfolio-item-delete",
+            "professionals:portfolio-item-delete",
             kwargs={"pk": self.portfolio_item.pk},
         )
 
@@ -52,19 +52,19 @@ class PortfolioItemDeleteViewTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    def test_artist_can_access_own_portfolio_delete_view(self):
-        self.client.force_login(self.artist_user)
+    def test_professional_can_access_own_portfolio_delete_view(self):
+        self.client.force_login(self.professional_user)
 
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response,
-            "artists/portfolio_item_confirm_delete.html",
+            "professionals/portfolio_item_confirm_delete.html",
         )
 
-    def test_artist_can_delete_own_portfolio_item(self):
-        self.client.force_login(self.artist_user)
+    def test_professional_can_delete_own_portfolio_item(self):
+        self.client.force_login(self.professional_user)
 
         response = self.client.post(self.url)
 
@@ -75,29 +75,29 @@ class PortfolioItemDeleteViewTests(TestCase):
             ).exists()
         )
 
-    def test_artist_cannot_delete_another_artists_portfolio_item(self):
+    def test_professional_cannot_delete_another_professionals_portfolio_item(self):
         other_user = User.objects.create_user(
             email="other-delete-artist@example.com",
             password=self.password,
-            role=User.Role.ARTIST,
+            role=User.Role.PROFESSIONAL,
         )
 
-        other_artist = ArtistProfile.objects.create(
+        other_professional = ProfessionalProfile.objects.create(
             user=other_user,
             studio_name="Other Studio",
         )
 
         other_item = PortfolioItem.objects.create(
-            artist_profile=other_artist,
-            title="Other Artist Tattoo",
+            professional_profile=other_professional,
+            title="Other Professional Tattoo",
         )
 
         url = reverse(
-            "artists:portfolio-item-delete",
+            "professionals:portfolio-item-delete",
             kwargs={"pk": other_item.pk},
         )
 
-        self.client.force_login(self.artist_user)
+        self.client.force_login(self.professional_user)
 
         response = self.client.post(url)
 

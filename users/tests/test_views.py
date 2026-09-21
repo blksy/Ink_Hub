@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import ArtistProfile
+from artists.models import ProfessionalProfile
 
 
 User = get_user_model()
@@ -44,12 +44,12 @@ class RegisterViewTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
 
-    def test_register_artist_creates_user_and_artist_profile(self):
+    def test_register_professional_creates_user_and_professional_profile(self):
         response = self.client.post(
             reverse("users:register"),
             data={
                 "email": "newartist@example.com",
-                "role": User.Role.ARTIST,
+                "role": User.Role.PROFESSIONAL,
                 "password1": "InkHubTest2026!x",
                 "password2": "InkHubTest2026!x",
             },
@@ -59,10 +59,10 @@ class RegisterViewTests(TestCase):
             email="newartist@example.com"
         )
 
-        self.assertEqual(user.role, User.Role.ARTIST)
+        self.assertEqual(user.role, User.Role.PROFESSIONAL)
 
         self.assertTrue(
-            ArtistProfile.objects.filter(user=user).exists()
+            ProfessionalProfile.objects.filter(user=user).exists()
         )
 
         self.assertEqual(response.status_code, 302)
@@ -106,7 +106,7 @@ class AuthenticationViewTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("artists:artist-list"),
+            reverse("professionals:professional-list"),
         )
 
         self.assertTrue(
@@ -153,5 +153,5 @@ class AuthenticationViewTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("artists:artist-list"),
+            reverse("professionals:professional-list"),
         )
