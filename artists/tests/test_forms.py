@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from artists.forms import ProfessionalProfileForm, PortfolioItemForm
-from artists.models import ProfessionalProfile, TattooStyle, PortfolioItem
+from artists.models import ProfessionalProfile, TattooStyle, PortfolioItem, Category
 
 User = get_user_model()
 
@@ -55,6 +55,7 @@ class ProfessionalProfileFormTests(TestCase):
                 "bio",
                 "location",
                 "profile_image",
+                "categories",
                 "styles",
             },
         )
@@ -97,3 +98,36 @@ class PortfolioItemFormTests(TestCase):
             "professional_profile",
             form.fields,
         )
+
+
+    def test_professional_profile_form_can_assign_categories(self):
+        category_one = Category.objects.create(
+            name="Tattoo",
+            slug="tattoo",
+        )
+        category_two = Category.objects.create(
+            name="Piercing",
+            slug="piercing",
+        )
+
+        form = ProfessionalProfileForm(
+            data={
+                "studio_name": "Dark Ink Studio",
+                "bio": "Tattoo and piercing studio.",
+                "location": "Poznań",
+                "categories": [
+                    category_one.pk,
+                    category_two.pk,
+                ],
+                "styles": [],
+            },
+            instance=self.professional,
+        )
+
+        self.assertTrue(form.is_valid())
+
+        professional = form.save()
+
+        self.assertEqual(professional.categories.count(), 2)
+        self.assertIn(category_one, professional.categories.all())
+        self.assertIn(category_two, professional.categories.all())

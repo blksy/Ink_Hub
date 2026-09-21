@@ -1,63 +1,58 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <title>{{ professional.studio_name }} | InkHub</title>
   </head>
-
   <body>
     <h1>{{ professional.studio_name|default:professional.user.email }}</h1>
-
     <p>Lokalizacja: {{ professional.location }}</p>
-
-    <h2>O artyście</h2>
-
+    <h2>O {{ professional.studio_name|default:professional.user.email }}</h2>
     {% if professional.bio %}
       <p>{{ professional.bio }}</p>
     {% else %}
-      <p>Artysta nie dodał jeszcze opisu.</p>
-    {% endif %}
-
-    <h2>Specjalizacje artysty</h2>
-
-    <ul>
-      {% for style in professional.styles.all %}
-        <li>{{ style.name }}</li>
-      {% empty %}
-        <li>Brak przypisanych stylów.</li>
-      {% endfor %}
-    </ul>
-
-    <hr />
-
-    <h2>Portfolio</h2>
-
-    {% if user.is_authenticated and user == professional.user %}
       <p>
-        <a href="{% url 'professionals:portfolio-item-create' %}">
-          Dodaj pracę
-        </a>
+        {{ professional.studio_name|default:professional.user.email }} nie dodał
+        jeszcze opisu.
       </p>
     {% endif %}
-
-    {% if professional.portfolio.all %}
+    <hr />
+    <h3>Kategorie usług</h3>
+    {% if professional.categories.exists %}
+      <ul>
+        {% for category in professional.categories.all %}
+          <li>{{ category.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak wybranych kategorii usług.</p>
+    {% endif %}
+    {% if professional.styles.exists %}
+      <h2>Style tatuażu</h2>
+      <ul>
+        {% for style in professional.styles.all %}
+          <li>{{ style.name }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <hr />
+    <h2>Portfolio</h2>
+    {% if user.is_authenticated and user == professional.user %}
+      <p>
+        <a href="{% url 'professionals:portfolio-item-create' %}">Dodaj pracę</a>
+      </p>
+    {% endif %}
+    {% if professional.portfolio.exists %}
       {% for item in professional.portfolio.all %}
         <div>
           {% if item.image %}
-            <img
-              src="{{ item.image.url }}"
-              alt="{{ item.title }}"
-              width="300"
-            />
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" width="300" />
           {% endif %}
-
           <h3>{{ item.title }}</h3>
-
           {% if item.description %}
             <p>{{ item.description }}</p>
           {% endif %}
-
-          {% if item.styles.all %}
+          {% if item.styles.exists %}
             <p>
               Style:
               {% for style in item.styles.all %}
@@ -65,30 +60,23 @@
               {% endfor %}
             </p>
           {% endif %}
-
           {% if user.is_authenticated and user == professional.user %}
             <p>
-              <a href="{% url 'professionals:portfolio-item-update' item.pk %}">
-                Edytuj
-              </a>
-
-              <a href="{% url 'professionals:portfolio-item-delete' item.pk %}">
-                Usuń
-              </a>
+              <a href="{% url 'professionals:portfolio-item-update' item.pk %}">Edytuj</a>
+              <a href="{% url 'professionals:portfolio-item-delete' item.pk %}">Usuń</a>
             </p>
           {% endif %}
         </div>
-
         <hr />
       {% endfor %}
     {% else %}
-      <p>Ten artysta nie dodał jeszcze żadnych prac.</p>
+      <p>
+        {{ professional.studio_name|default:professional.user.email }}
+        nie dodał jeszcze żadnych prac.
+      </p>
     {% endif %}
-
     <p>
-      <a href="{% url 'professionals:professional-list' %}">
-        Powrót do listy artystów
-      </a>
+      <a href="{% url 'professionals:professional-list' %}">Powrót do listy</a>
     </p>
   </body>
 </html>
