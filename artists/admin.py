@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ProfessionalProfile, PortfolioItem, TattooStyle
+from .models import ProfessionalProfile, PortfolioItem, TattooStyle, Category
 
 
 @admin.register(ProfessionalProfile)
@@ -19,6 +19,7 @@ class ProfessionalProfileAdmin(admin.ModelAdmin):
 
     filter_horizontal = ("styles",)
 
+
 @admin.register(TattooStyle)
 class TattooStyleAdmin(admin.ModelAdmin):
     list_display = (
@@ -34,6 +35,7 @@ class TattooStyleAdmin(admin.ModelAdmin):
     prepopulated_fields = {
         "slug": ("name",),
     }
+
 
 @admin.register(PortfolioItem)
 class PortfolioItemAdmin(admin.ModelAdmin):
@@ -52,3 +54,10 @@ class PortfolioItemAdmin(admin.ModelAdmin):
     filter_horizontal = ("styles",)
 
     ordering = ("-created_at",)
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+      list_display = ("name", "slug")
+      search_fields = ("name",)
+      prepopulated_fields = {"slug": ("name",)}

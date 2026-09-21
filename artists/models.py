@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
 
+
 class TattooStyle(models.Model):
     name = models.CharField(
         max_length=100,
@@ -12,6 +13,18 @@ class TattooStyle(models.Model):
     max_length=120,
     unique=True,
     )
+
+    def __str__(self):
+        return self.name
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+
+    class Meta:
+        verbose_name_plural = "categories"
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -41,6 +54,12 @@ class ProfessionalProfile(models.Model):
         upload_to="professionals/profile_images/",
         blank=True,
         null=True,
+    )
+
+    categories = models.ManyToManyField(
+        Category,
+        related_name="professionals",
+        blank=True,
     )
 
     styles = models.ManyToManyField(

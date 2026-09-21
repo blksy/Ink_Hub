@@ -11,8 +11,14 @@ class ProfessionalProfileForm(forms.ModelForm):
             "bio",
             "location",
             "profile_image",
+            "categories",
             "styles",
         )
+
+        widgets = {
+            "categories": forms.CheckboxSelectMultiple(),
+            "styles": forms.CheckboxSelectMultiple(),
+        }
 
 
 class PortfolioItemForm(forms.ModelForm):

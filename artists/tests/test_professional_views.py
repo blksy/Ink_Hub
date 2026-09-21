@@ -2,13 +2,13 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import ProfessionalProfile, PortfolioItem
+from artists.models import ProfessionalProfile, PortfolioItem, Category, TattooStyle
 
 
 User = get_user_model()
 
 
-class ArtistViewTests(TestCase):
+class ProfessionalViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email="viewartist@example.com",
@@ -162,3 +162,36 @@ class ArtistViewTests(TestCase):
             ),
         )
 
+    def test_professional_detail_displays_categories(self):
+        tattoo = Category.objects.create(
+            name="Tatuaż",
+            slug="tatuaz",
+        )
+        piercing = Category.objects.create(
+            name="Piercing",
+            slug="piercing",
+        )
+
+        self.profile.categories.add(tattoo, piercing)
+
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Tatuaż")
+        self.assertContains(response, "Piercing")
+
+    def test_professional_detail_without_tattoo_styles_does_not_display_styles_section(self):
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Style tatuażu")
