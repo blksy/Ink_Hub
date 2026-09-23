@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ProfessionalProfile, PortfolioItem, TattooStyle, Category
+from .models import ProfessionalProfile, PortfolioItem, TattooStyle, Category, Service
 
 
 @admin.register(ProfessionalProfile)
@@ -61,3 +61,25 @@ class CategoryAdmin(admin.ModelAdmin):
       list_display = ("name", "slug")
       search_fields = ("name",)
       prepopulated_fields = {"slug": ("name",)}
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "professional",
+        "category",
+        "price",
+        "duration_minutes",
+        "is_active",
+    )
+
+    list_filter = (
+        "is_active",
+        "category",
+    )
+
+    search_fields = (
+        "name",
+        "professional__studio_name",
+    )

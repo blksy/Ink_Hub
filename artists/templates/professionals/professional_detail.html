@@ -36,6 +36,36 @@
       </ul>
     {% endif %}
     <hr />
+    <h2>Cennik</h2>
+    {% if user.is_authenticated and user == professional.user %}
+      <p>
+        <a href="{% url 'professionals:service-create' %}">Dodaj usługę</a>
+      </p>
+    {% endif %}
+    {% if services %}
+      <ul>
+        {% for service in services %}
+          <li>
+            <h3>{{ service.name }}</h3>
+            <p>Kategoria: {{ service.category.name }}</p>
+            {% if service.description %}
+              <p>{{ service.description }}</p>
+            {% endif %}
+            <p>Cena: {{ service.price }} zł</p>
+            {% if service.duration_minutes %}
+              <p>Czas trwania: {{ service.duration_minutes }} min</p>
+            {% endif %}
+            {% if user == professional.user %}
+              <a href="{% url 'professionals:service-update' service.pk %}">Edytuj</a>
+              <a href="{% url 'professionals:service-delete' service.pk %}">Usuń</a>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak aktywnych usług w cenniku.</p>
+    {% endif %}
+    <hr />
     <h2>Portfolio</h2>
     {% if user.is_authenticated and user == professional.user %}
       <p>
@@ -59,6 +89,12 @@
                 {{ style.name }}{% if not forloop.last %}, {% endif %}
               {% endfor %}
             </p>
+          {% endif %}
+          {% if item.final_price %}
+            <p>Cena projektu: {{ item.final_price }} zł</p>
+          {% endif %}
+          {% if item.sessions_count %}
+            <p>Liczba sesji: {{ item.sessions_count }}</p>
           {% endif %}
           {% if user.is_authenticated and user == professional.user %}
             <p>

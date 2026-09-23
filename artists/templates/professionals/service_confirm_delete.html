@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Usuń usługę</title>
+  </head>
+  <body>
+    <h1>Usuń usługę</h1>
+    <p>
+      Czy na pewno chcesz usunąć usługę
+      <strong>{{ object.name }}</strong>?
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Tak, usuń</button>
+    </form>
+    <a href="{% url 'professionals:professional-detail' object.professional.pk %}">Anuluj</a>
+  </body>
+</html>
