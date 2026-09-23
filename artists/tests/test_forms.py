@@ -1,7 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-
-from artists.forms import ProfessionalProfileForm, PortfolioItemForm
+from django.core.files.uploadedfile import SimpleUploadedFile
+from PIL import Image
+from io import BytesIO
+from decimal import Decimal
+from artists.forms import ProfessionalProfileForm, PortfolioItemForm, ServiceForm
 from artists.models import ProfessionalProfile, TattooStyle, PortfolioItem, Category
 
 User = get_user_model()
@@ -78,6 +81,20 @@ class PortfolioItemFormTests(TestCase):
             slug="blackwork-form-test",
         )
 
+    def create_test_image(self):
+        image_file = BytesIO()
+
+        image = Image.new("RGB", (100, 100))
+        image.save(image_file, "JPEG")
+
+        image_file.seek(0)
+
+        return SimpleUploadedFile(
+            "test.jpg",
+            image_file.read(),
+            content_type="image/jpeg",
+    )
+
     def test_form_contains_expected_fields(self):
         form = PortfolioItemForm()
 
@@ -88,6 +105,8 @@ class PortfolioItemFormTests(TestCase):
                 "description",
                 "image",
                 "styles",
+                "final_price",
+                "sessions_count", 
             },
         )
 
@@ -131,3 +150,34 @@ class PortfolioItemFormTests(TestCase):
         self.assertEqual(professional.categories.count(), 2)
         self.assertIn(category_one, professional.categories.all())
         self.assertIn(category_two, professional.categories.all())
+
+    def test_portfolio_form_contains_price_and_sessions_fields(self):
+        form = PortfolioItemForm()
+
+        self.assertIn("final_price", form.fields)
+        self.assertIn("sessions_count", form.fields)
+
+    def test_portfolio_form_accepts_price_and_sessions(self):
+        image = self.create_test_image()
+
+        form = PortfolioItemForm(
+            data={
+                "title": "Blackwork sleeve",
+                "description": "Full sleeve project",
+                "final_price": "2400.00",
+                "sessions_count": 3,
+            },
+            files={
+                "image": image,
+            },
+        )
+    
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_portfolio_form_allows_empty_price_and_sessions(self):
+        form = PortfolioItemForm()
+
+        self.assertFalse(form.fields["final_price"].required)
+        self.assertFalse(form.fields["sessions_count"].required)
+
+

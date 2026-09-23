@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import ProfessionalProfile, PortfolioItem
+from .models import ProfessionalProfile, PortfolioItem, Service
 
 
 class ProfessionalProfileForm(forms.ModelForm):
@@ -29,4 +29,29 @@ class PortfolioItemForm(forms.ModelForm):
             "description",
             "image",
             "styles",
+            "final_price",
+            "sessions_count",
         )
+
+
+class ServiceForm(forms.ModelForm):
+    class Meta:
+        model = Service
+        fields = (
+            "category",
+            "name",
+            "description",
+            "price",
+            "duration_minutes",
+            "is_active",
+        )
+
+    def __init__(self, *args, professional=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if professional is not None:
+            self.fields["category"].queryset = professional.categories.all()
+        else:
+            self.fields["category"].queryset = (
+                self.fields["category"].queryset.none()
+            )

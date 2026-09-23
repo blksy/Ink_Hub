@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Dodaj usługę</title>
+  </head>
+  <body>
+    <h1>Dodaj usługę</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Dodaj usługę</button>
+    </form>
+    <a href="{% url 'professionals:professional-detail' user.professional_profile.pk %}">Anuluj</a>
+  </body>
+</html>
