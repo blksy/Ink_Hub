@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
-
+from decimal import Decimal
 from artists.models import ProfessionalProfile, PortfolioItem, Category, TattooStyle
 
 
@@ -195,3 +195,41 @@ class ProfessionalViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Style tatuażu")
+
+    def test_professional_detail_displays_portfolio_price_and_sessions(self):
+        PortfolioItem.objects.create(
+            professional_profile=self.profile,
+            title="Blackwork sleeve",
+            image="test.jpg",
+            final_price=Decimal("2400.00"),
+            sessions_count=3,
+        )
+
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "2400.00")
+        self.assertContains(response, "Liczba sesji: 3")
+
+    def test_professional_detail_does_not_display_price_and_sessions_when_empty(self):
+        PortfolioItem.objects.create(
+            professional_profile=self.profile,
+            title="Small tattoo",
+            image="test.jpg",
+        )
+
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Cena projektu:")
+        self.assertNotContains(response, "Liczba sesji:")
