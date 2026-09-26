@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.core.exceptions import ValidationError
-
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 
 class TattooStyle(models.Model):
     name = models.CharField(
@@ -88,6 +89,13 @@ class PortfolioItem(models.Model):
         on_delete=models.CASCADE,
         related_name="portfolio",
     )
+    service = models.ForeignKey(
+        "Service",
+        on_delete=models.SET_NULL,
+        related_name="portfolio_items",
+        blank=True,
+        null=True,
+    )
 
     image = models.ImageField(
         upload_to="professionals/portfolio/",
@@ -102,6 +110,7 @@ class PortfolioItem(models.Model):
         blank=True,
     )
 
+    # Tattoo-specific metadata - optional
     styles = models.ManyToManyField(
         TattooStyle,
         related_name="portfolio_items",
@@ -123,6 +132,21 @@ class PortfolioItem(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
+
+    def clean(self):
+        if (
+            self.service_id
+            and self.professional_profile_id
+            and self.service.professional_id != self.professional_profile_id
+        ):
+            raise ValidationError(
+                {
+                    "service": (
+                        "Portfolio item can only use a service "
+                        "belonging to the same professional."
+                    )
+                }
+            )
 
     def __str__(self):
         return self.title or f"Portfolio item #{self.pk}"
@@ -147,11 +171,17 @@ class Service(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+        ],
     )
 
     duration_minutes = models.PositiveIntegerField(
         blank=True,
         null=True,
+        validators=[
+            MinValueValidator(1),
+        ],
     )
 
     is_active = models.BooleanField(default=True)

@@ -1,9 +1,15 @@
 from decimal import Decimal
-
+from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from artists.models import PortfolioItem, ProfessionalProfile, TattooStyle
+from artists.models import (
+    PortfolioItem,
+    ProfessionalProfile, 
+    TattooStyle,
+    Category,
+    Service,
+)
 
 
 User = get_user_model()
@@ -21,6 +27,20 @@ class PortfolioItemModelTests(TestCase):
         self.profile = ProfessionalProfile.objects.create(
             user=self.user,
             studio_name="Ink House",
+        )
+
+        self.category = Category.objects.create(
+            name="Tattoo",
+            slug="tattoo",
+        )
+
+        self.profile.categories.add(self.category)
+
+        self.service = Service.objects.create(
+            professional=self.profile,
+            category=self.category,
+            name="Tattoo session",
+            price=Decimal("500.00"),
         )
 
     def test_create_portfolio_item(self):
@@ -116,3 +136,70 @@ class PortfolioItemModelTests(TestCase):
 
         self.assertIsNone(portfolio_item.final_price)
         self.assertIsNone(portfolio_item.sessions_count)
+
+    def test_portfolio_item_can_use_own_service(self):
+        portfolio_item = PortfolioItem(
+            professional_profile=self.profile,
+            service=self.service,
+            image="test.jpg",
+        )
+
+        portfolio_item.full_clean()    
+
+        self.assertEqual(portfolio_item.service, self.service)
+
+    def test_portfolio_item_can_exist_without_service(self):
+        portfolio_item = PortfolioItem(
+            professional_profile=self.profile,
+            image="test.jpg",
+        )
+
+        portfolio_item.full_clean()
+
+        self.assertIsNone(portfolio_item.service)       
+
+    def test_portfolio_item_cannot_use_another_professionals_service(self):
+        other_user = User.objects.create_user(
+            email="other@example.com",
+            password="testpass123",
+            role=User.Role.PROFESSIONAL,
+        )
+
+        other_profile = ProfessionalProfile.objects.create(
+            user=other_user,
+            studio_name="Other Studio",
+        )
+
+        other_profile.categories.add(self.category)
+
+        other_service = Service.objects.create(
+            professional=other_profile,
+            category=self.category,
+            name="Other Service",
+            price=Decimal("100.00"),
+        )
+
+        portfolio_item = PortfolioItem(
+            professional_profile=self.profile,
+            service=other_service,
+            image="test.jpg",
+        )
+
+        with self.assertRaises(ValidationError):
+            portfolio_item.full_clean()
+
+    def test_portfolio_item_can_exist_without_tattoo_styles(self):
+        portfolio_item = PortfolioItem(
+            professional_profile=self.profile,
+            service=self.service,
+            title="Portfolio work",
+            image="test.jpg",
+        )
+
+        portfolio_item.full_clean()
+        portfolio_item.save()
+
+        self.assertEqual(
+            portfolio_item.styles.count(),
+            0,
+        )
