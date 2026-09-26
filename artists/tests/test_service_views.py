@@ -224,6 +224,30 @@ class ServiceUpdateViewTests(TestCase):
             "Updated description",
         )
 
+    def test_owner_can_reactivate_inactive_service(self):
+        self.service.is_active = False
+        self.service.save()
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(
+            self.url,
+            {
+                "category": self.category.pk,
+                "name": self.service.name,
+                "description": self.service.description,
+                "price": "300.00",
+                "duration_minutes": "60",
+                "is_active": True,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.service.refresh_from_db()
+
+        self.assertTrue(self.service.is_active)
+
 
 class ServiceDeleteViewTests(TestCase):
     def setUp(self):
@@ -401,6 +425,22 @@ class ProfessionalDetailServiceTests(TestCase):
             services,
         )
         self.assertNotIn(
+            self.inactive_service,
+            services,
+        )
+
+    def test_owner_can_see_inactive_service(self):
+        self.client.force_login(self.professional_user)
+
+        response = self.client.get(self.url)
+
+        services = response.context["services"]
+
+        self.assertIn(
+            self.active_service,
+            services,
+        )
+        self.assertIn(
             self.inactive_service,
             services,
         )

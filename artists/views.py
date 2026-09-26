@@ -29,13 +29,20 @@ class ProfessionalDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-    
-        context["services"] = self.object.services.filter(
-            is_active=True
-        )
-    
-        return context
 
+        services = self.object.services.select_related("category")
+
+        is_owner = (
+            self.request.user.is_authenticated
+            and self.object.user == self.request.user
+        )
+
+        if not is_owner:
+            services = services.filter(is_active=True)
+
+        context["services"] = services
+
+        return context
 
 class ProfessionalProfileUpdateView(ProfessionalRequiredMixin, UpdateView):
     model = ProfessionalProfile
@@ -57,9 +64,15 @@ class PortfolioItemCreateView(ProfessionalRequiredMixin, CreateView):
     form_class = PortfolioItemForm
     template_name = "professionals/portfolio_item_form.html"
 
-    def form_valid(self, form):
-        form.instance.professional_profile = self.request.user.professional_profile
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["professional"] = self.request.user.professional_profile
+        return kwargs
 
+    def form_valid(self, form):
+        form.instance.professional_profile = (
+            self.request.user.professional_profile
+        )
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -78,6 +91,11 @@ class PortfolioItemUpdateView(ProfessionalRequiredMixin, UpdateView):
         return PortfolioItem.objects.filter(
             professional_profile=self.request.user.professional_profile
         )
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["professional"] = self.request.user.professional_profile
+        return kwargs
 
     def get_success_url(self):
         return reverse(
