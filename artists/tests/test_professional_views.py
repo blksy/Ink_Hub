@@ -131,7 +131,6 @@ class ProfessionalViewTests(TestCase):
             user=other_user,
             studio_name="Other Studio",
         )
-
         self.client.force_login(other_user)
 
         response = self.client.get(
@@ -196,13 +195,12 @@ class ProfessionalViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Style tatuażu")
 
-    def test_professional_detail_displays_portfolio_price_and_sessions(self):
+    def test_professional_detail_displays_portfolio_price(self):
         PortfolioItem.objects.create(
             professional_profile=self.profile,
             title="Blackwork sleeve",
             image="test.jpg",
             final_price=Decimal("2400.00"),
-            sessions_count=3,
         )
 
         response = self.client.get(
@@ -213,10 +211,12 @@ class ProfessionalViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "2400.00")
-        self.assertContains(response, "Liczba sesji: 3")
+        self.assertContains(
+            response,
+            "Cena realizacji: 2400,00 zł",
+        )
 
-    def test_professional_detail_does_not_display_price_and_sessions_when_empty(self):
+    def test_professional_detail_does_not_display_price_when_empty(self):
         PortfolioItem.objects.create(
             professional_profile=self.profile,
             title="Small tattoo",
@@ -231,5 +231,69 @@ class ProfessionalViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "Cena projektu:")
-        self.assertNotContains(response, "Liczba sesji:")
+        self.assertNotContains(response, "Cena realizacji:")
+
+    def test_owner_sees_edit_profile_link(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Edytuj profil")
+        self.assertContains(
+            response,
+            reverse("professionals:professional-profile-edit"),
+        )
+
+    def test_other_user_does_not_see_edit_profile_link(self):
+        other_user = User.objects.create_user(
+           email="other@example.com",
+            password="testpass123",
+            role=User.Role.PROFESSIONAL,
+        )
+
+        ProfessionalProfile.objects.create(
+            user=other_user,
+            studio_name="Other Studio",
+        )
+
+        self.client.force_login(other_user)
+
+        response = self.client.get(
+            reverse(
+                "professionals:professional-detail",
+                kwargs={"pk": self.profile.pk},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Edytuj profil")
+
+    def test_professional_list_without_tattoo_styles_does_not_display_styles_section(self):
+        response = self.client.get(
+            reverse("professionals:professional-list")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Style tatuażu")
+
+    def test_professional_list_displays_tattoo_styles_when_assigned(self):
+        style = TattooStyle.objects.create(
+            name="Blackwork",
+            slug="blackwork",
+        )
+
+        self.profile.styles.add(style)
+
+        response = self.client.get(
+            reverse("professionals:professional-list")
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Style tatuażu")
+        self.assertContains(response, "Blackwork")

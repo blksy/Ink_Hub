@@ -1,10 +1,9 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Artyści | InkHub</title>
+    <title>Specjaliści | InkHub</title>
   </head>
-
   <body>
     <h1>Artyści</h1>
     <form method="post" action="{% url 'users:logout' %}">
@@ -12,25 +11,39 @@
       <button type="submit">Wyloguj się</button>
     </form>
     {% for professional in professionals %}
-    <article>
-      <a href="{% url 'professionals:professional-detail' professional.pk %}">
-        {{ professional.studio_name|default:professional.user.email }}
-      </a>
-
-      <p>Lokalizacja: {{ professional.location }}</p>
-
-      <p>Style:</p>
-
-      <ul>
-        {% for style in professional.styles.all %}
-        <li>{{ style.name }}</li>
-        {% empty %}
-        <li>none</li>
-        {% endfor %}
-      </ul>
-    </article>
+      <article>
+        {% if professional.profile_image %}
+          <img src="{{ professional.profile_image.url }}"
+               alt="{{ professional.studio_name|default:professional.user.email }}"
+               width="150" />
+        {% endif %}
+        <h2>
+          <a href="{% url 'professionals:professional-detail' professional.pk %}">
+            {{ professional.studio_name|default:professional.user.email }}
+          </a>
+        </h2>
+        {% if professional.location %}
+          <p>Lokalizacja: {{ professional.location }}</p>
+        {% endif %}
+        {% if professional.categories.exists %}
+          <p>Kategorie:</p>
+          <ul>
+            {% for category in professional.categories.all %}
+              <li>{{ category.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if professional.styles.exists %}
+          <p>Style tatuażu:</p>
+          <ul>
+            {% for style in professional.styles.all %}
+              <li>{{ style.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </article>
     {% empty %}
-    <p>artists not found.</p>
+      <p>Nie znaleziono specjalistów.</p>
     {% endfor %}
   </body>
 </html>

@@ -1,16 +1,27 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
-    <title>Dodaj pracę | InkHub</title>
+    {% if object %}
+      <title>Edytuj pracę</title>
+    {% else %}
+      <title>Dodaj pracę</title>
+    {% endif %}
   </head>
   <body>
-    <h1>Dodaj pracę do portfolio</h1>
-
+    {% if object %}
+      <h1>Edytuj pracę w portfolio</h1>
+    {% else %}
+      <h1>Dodaj pracę do portfolio</h1>
+    {% endif %}
     <form method="post" enctype="multipart/form-data">
-      {% csrf_token %} {{ form.as_p }}
-
-      <button type="submit">Dodaj do portfolio</button>
+      {% csrf_token %}
+      {{ form.as_p }}
+      {% if object %}
+        <button type="submit">Zapisz zmiany</button>
+      {% else %}
+        <button type="submit">Dodaj do portfolio</button>
+      {% endif %}
     </form>
   </body>
 </html>

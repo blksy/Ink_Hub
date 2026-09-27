@@ -127,8 +127,11 @@ class PortfolioItem(models.Model):
     sessions_count = models.PositiveIntegerField(
         blank=True,
         null=True,
+        validators=[
+            MinValueValidator(1),
+        ],
     )
-
+    
     created_at = models.DateTimeField(
         auto_now_add=True,
     )

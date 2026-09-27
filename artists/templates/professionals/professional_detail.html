@@ -6,6 +6,16 @@
   </head>
   <body>
     <h1>{{ professional.studio_name|default:professional.user.email }}</h1>
+    {% if professional.profile_image %}
+      <img src="{{ professional.profile_image.url }}"
+           alt="{{ professional.studio_name|default:professional.user.email }}"
+           width="200" />
+    {% endif %}
+    {% if user.is_authenticated and user == professional.user %}
+      <p>
+        <a href="{% url 'professionals:professional-profile-edit' %}">Edytuj profil</a>
+      </p>
+    {% endif %}
     <p>Lokalizacja: {{ professional.location }}</p>
     <h2>O {{ professional.studio_name|default:professional.user.email }}</h2>
     {% if professional.bio %}
@@ -55,7 +65,10 @@
             {% if service.duration_minutes %}
               <p>Czas trwania: {{ service.duration_minutes }} min</p>
             {% endif %}
-            {% if user == professional.user %}
+            {% if not service.is_active %}
+              <p><strong>Usługa nieaktywna</strong></p>
+            {% endif %}
+            {% if user.is_authenticated and user == professional.user %}
               <a href="{% url 'professionals:service-update' service.pk %}">Edytuj</a>
               <a href="{% url 'professionals:service-delete' service.pk %}">Usuń</a>
             {% endif %}
@@ -63,7 +76,7 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p>Brak aktywnych usług w cenniku.</p>
+      <p>Brak usług w cenniku.</p>
     {% endif %}
     <hr />
     <h2>Portfolio</h2>
@@ -79,19 +92,22 @@
             <img src="{{ item.image.url }}" alt="{{ item.title }}" width="300" />
           {% endif %}
           <h3>{{ item.title }}</h3>
+          {% if item.service %}
+            <p>Usługa: {{ item.service.name }}</p>
+          {% endif %}
           {% if item.description %}
             <p>{{ item.description }}</p>
           {% endif %}
           {% if item.styles.exists %}
             <p>
-              Style:
+              Style tatuażu:
               {% for style in item.styles.all %}
                 {{ style.name }}{% if not forloop.last %}, {% endif %}
               {% endfor %}
             </p>
           {% endif %}
           {% if item.final_price %}
-            <p>Cena projektu: {{ item.final_price }} zł</p>
+            <p>Cena realizacji: {{ item.final_price }} zł</p>
           {% endif %}
           {% if item.sessions_count %}
             <p>Liczba sesji: {{ item.sessions_count }}</p>
