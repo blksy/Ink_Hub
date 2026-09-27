@@ -15,6 +15,15 @@ class ProfessionalProfileForm(forms.ModelForm):
             "styles",
         )
 
+        labels = {
+            "studio_name": "Nazwa studia / salonu",
+            "bio": "Opis",
+            "location": "Lokalizacja",
+            "profile_image": "Zdjęcie profilowe / logo",
+            "categories": "Kategorie usług",
+            "styles": "Style tatuażu",
+        }
+
         widgets = {
             "categories": forms.CheckboxSelectMultiple(),
             "styles": forms.CheckboxSelectMultiple(),
@@ -40,7 +49,7 @@ class ProfessionalProfileForm(forms.ModelForm):
     
             if not used_category_ids.issubset(selected_category_ids):
                 raise forms.ValidationError(
-                    "Categories used by existing services cannot be removed."
+                     "Nie można usunąć kategorii używanej przez istniejące usługi."
                 )
 
         return categories
@@ -58,8 +67,21 @@ class PortfolioItemForm(forms.ModelForm):
             "final_price",
             "sessions_count",
         )
+
+        labels = {
+            "title": "Tytuł",
+            "description": "Opis",
+            "image": "Zdjęcie",
+            "service": "Usługa",
+            "styles": "Style tatuażu",
+            "final_price": "Cena realizacji",
+            "sessions_count": "Liczba sesji (opcjonalnie)",
+        }
+
     def __init__(self, *args, professional=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["service"].empty_label = "Brak powiązanej usługi"
 
         if professional is not None:
             self.fields["service"].queryset = professional.services.all()
@@ -80,8 +102,19 @@ class ServiceForm(forms.ModelForm):
             "is_active",
         )
 
+        labels = {
+            "category": "Kategoria",
+            "name": "Nazwa usługi",
+            "description": "Opis",
+            "price": "Cena",
+            "duration_minutes": "Czas trwania (minuty)",
+            "is_active": "Usługa aktywna",
+        }
+
     def __init__(self, *args, professional=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["category"].empty_label = "Wybierz kategorię"
 
         if professional is not None:
             self.fields["category"].queryset = professional.categories.all()

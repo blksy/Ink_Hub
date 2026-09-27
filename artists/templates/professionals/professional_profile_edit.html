@@ -1,15 +1,13 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pl">
   <head>
     <meta charset="UTF-8" />
     <title>Edytuj profil | InkHub</title>
   </head>
   <body>
-    <h1>Edytuj profil artysty</h1>
-
+    <h1>Edytuj profil specjalisty</h1>
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %} {{ form.as_p }}
-
       <button type="submit">Zapisz zmiany</button>
     </form>
   </body>
