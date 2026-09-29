@@ -1,5 +1,5 @@
 from django.db import models
-from artists.models import ProfessionalProfile
+from artists.models import ProfessionalProfile, Category
 
 
 class Studio(models.Model):
@@ -10,6 +10,11 @@ class Studio(models.Model):
         upload_to="studios/logos/",
         blank=True,
         null=True,
+    )
+    categories = models.ManyToManyField(
+        Category,
+        related_name="studios",
+        blank=True,
     )
     members = models.ManyToManyField(
         ProfessionalProfile,

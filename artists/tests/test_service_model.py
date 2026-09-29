@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db.models.deletion import ProtectedError
 from django.test import TestCase
-
+from studios.models import Studio
 from artists.models import Category, ProfessionalProfile, Service
 
 
@@ -176,3 +176,48 @@ class ServiceModelTests(TestCase):
         )
 
         service.full_clean()
+
+    def test_service_can_belong_to_studio(self):
+        studio = Studio.objects.create(
+            name="Gentlemen Barber",
+            location="Poznań",
+        )
+
+        service = Service.objects.create(
+            professional=self.profile,
+            studio=studio,
+            category=self.category,
+            name="Strzyżenie męskie",
+            price="80.00",
+            duration_minutes=45,
+        )
+    
+        self.assertEqual(service.studio, studio)
+        self.assertIn(service, studio.services.all())
+
+    def test_service_can_have_assigned_professionals(self):
+        studio = Studio.objects.create(
+            name="Gentlemen Barber",
+            location="Poznań",
+    )
+
+        service = Service.objects.create(
+            professional=self.profile,
+            studio=studio,
+            category=self.category,
+            name="Haircut",
+            price=Decimal("80.00"),
+            duration_minutes=45,
+    )
+
+        service.professionals.add(self.profile)
+
+        self.assertIn(
+            self.profile,
+            service.professionals.all(),
+    )
+
+        self.assertIn(
+            service,
+            self.profile.studio_services.all(),
+    )

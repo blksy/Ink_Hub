@@ -51,13 +51,17 @@ class ProfessionalProfileModelTests(TestCase):
             )
 
     def test_string_representation_uses_studio_name(self):
+        self.user.first_name = "Jan"
+        self.user.last_name = "Kowalski"
+        self.user.save()
+
         profile = ProfessionalProfile.objects.create(
             user=self.user,
             studio_name="Black Needle",
-        )
+    )
 
-        self.assertEqual(str(profile), "Black Needle")
-
+        self.assertEqual(str(profile), "Jan Kowalski")
+        
     def test_string_representation_uses_email_when_studio_name_is_empty(self):
         profile = ProfessionalProfile.objects.create(
             user=self.user,

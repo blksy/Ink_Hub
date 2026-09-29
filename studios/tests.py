@@ -1,5 +1,5 @@
 from django.test import TestCase
-from artists.models import ProfessionalProfile
+from artists.models import ProfessionalProfile, Category
 from studios.models import Studio, StudioMembership
 from django.db import IntegrityError
 from django.contrib.auth import get_user_model
@@ -128,4 +128,22 @@ class StudioModelTests(TestCase):
                 studio=studio,
                 professional=professional,
                 role=StudioMembership.Role.MANAGER,
+        )
+
+    def test_studio_can_have_categories(self):
+        category = Category.objects.create(
+            name="Barber",
+            slug="barber",
+        )
+
+        studio = Studio.objects.create(
+           name="Gentlemen Barber",
+            location="Poznań",
+        )
+
+        studio.categories.add(category)
+
+        self.assertIn(
+            category,
+            studio.categories.all(),
         )

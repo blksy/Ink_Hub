@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 
+
 class TattooStyle(models.Model):
     name = models.CharField(
         max_length=100,
@@ -20,8 +21,15 @@ class TattooStyle(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=120, unique=True)
+    name = models.CharField(
+        max_length=100, 
+        unique=True
+    )
+
+    slug = models.SlugField(
+        max_length=120, 
+        unique=True
+    )
 
     class Meta:
         verbose_name_plural = "categories"
@@ -37,6 +45,9 @@ class ProfessionalProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="professional_profile",
     )
+
+    # Temporary legacy field.
+    # It will be removed after studio data is fully migrated to Studio.
     studio_name = models.CharField(
         max_length=150,
         blank=True,
@@ -46,6 +57,8 @@ class ProfessionalProfile(models.Model):
         blank=True,
     )
 
+    # Temporary legacy field.
+    # Studio location will ultimately belong to Studio.
     location = models.CharField(
         max_length=150,
         blank=True,
@@ -57,6 +70,8 @@ class ProfessionalProfile(models.Model):
         null=True,
     )
 
+    # Temporary legacy relation.
+    # Categories will ultimately describe the studio/service offering.
     categories = models.ManyToManyField(
         Category,
         related_name="professionals",
@@ -80,7 +95,9 @@ class ProfessionalProfile(models.Model):
         return super().save(*args, **kwargs)
     
     def __str__(self):
-        return self.studio_name or self.user.email
+        full_name = self.user.get_full_name()
+
+        return full_name or self.user.email
 
 
 class PortfolioItem(models.Model):
@@ -89,6 +106,7 @@ class PortfolioItem(models.Model):
         on_delete=models.CASCADE,
         related_name="portfolio",
     )
+
     service = models.ForeignKey(
         "Service",
         on_delete=models.SET_NULL,
@@ -162,14 +180,33 @@ class Service(models.Model):
         related_name="services",
     )
 
+    studio = models.ForeignKey(
+        "studios.Studio",
+        on_delete=models.CASCADE,
+        related_name="services",
+        blank=True,
+        null=True,
+    )
+
+    professionals = models.ManyToManyField(
+        ProfessionalProfile,
+        related_name="studio_services",
+        blank=True,
+    )
+
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
         related_name="services",
     )
 
-    name = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
+    name = models.CharField(
+        max_length=150
+    )
+
+    description = models.TextField(
+        blank=True
+    )
 
     price = models.DecimalField(
         max_digits=10,
@@ -187,10 +224,17 @@ class Service(models.Model):
         ],
     )
 
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(
+        default=True
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     def clean(self):
         if (
