@@ -188,12 +188,6 @@ class Service(models.Model):
         null=True,
     )
 
-    professionals = models.ManyToManyField(
-        ProfessionalProfile,
-        related_name="studio_services",
-        blank=True,
-    )
-
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
