@@ -287,3 +287,39 @@ class EmployeeServiceModelTests(TestCase):
             str(employee_service),
             f"{self.profile} - {self.service}",
         )
+
+    def test_employee_service_price_must_be_positive(self):
+        employee_service = EmployeeService(
+            membership=self.membership,
+            service=self.service,
+            price=Decimal("0.00"),
+            duration_minutes=45,
+        )
+
+        with self.assertRaises(ValidationError):
+            employee_service.full_clean()
+
+    def test_employee_service_duration_must_be_positive(self):
+        employee_service = EmployeeService(
+            membership=self.membership,
+            service=self.service,
+            price=Decimal("80.00"),
+            duration_minutes=0,
+        )
+
+        with self.assertRaises(ValidationError):
+            employee_service.full_clean()
+
+    def test_employee_service_requires_active_membership(self):
+        self.membership.status = StudioMembership.Status.INACTIVE
+        self.membership.save()
+
+        employee_service = EmployeeService(
+            membership=self.membership,
+            service=self.service,
+            price=Decimal("80.00"),
+            duration_minutes=45,
+        )
+
+        with self.assertRaises(ValidationError):
+            employee_service.full_clean()

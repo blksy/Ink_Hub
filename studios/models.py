@@ -1,6 +1,8 @@
 from django.db import models
 from artists.models import ProfessionalProfile, Category
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from decimal import Decimal
 
 
 class Studio(models.Model):
@@ -92,9 +94,16 @@ class EmployeeService(models.Model):
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
+        validators=[
+            MinValueValidator(Decimal("0.01")),
+        ],
     )
 
-    duration_minutes = models.PositiveIntegerField()
+    duration_minutes = models.PositiveIntegerField(
+        validators=[
+            MinValueValidator(1),
+        ],
+    )
 
     is_active = models.BooleanField(
         default=True,
@@ -123,6 +132,19 @@ class EmployeeService(models.Model):
                     "service": (
                         "Employee service must belong "
                         "to the same studio as the membership."
+                    )
+                }
+            )
+
+        if (
+            self.membership_id
+            and self.membership.status != StudioMembership.Status.ACTIVE
+        ):
+            raise ValidationError(
+                {
+                    "membership": (
+                        "Employee service requires "
+                        "an active studio membership."
                     )
                 }
             )
