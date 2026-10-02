@@ -232,9 +232,9 @@ class Service(models.Model):
 
     def clean(self):
         if (
-            self.professional_id
+            self.studio_id
             and self.category_id
-            and not self.professional.categories.filter(
+            and not self.studio.categories.filter(
                 pk=self.category_id
             ).exists()
         ):
@@ -242,7 +242,7 @@ class Service(models.Model):
                 {
                     "category": (
                         "Service category must be assigned "
-                        "to the professional profile."
+                        "to the studio."
                     )
                 }
             )
