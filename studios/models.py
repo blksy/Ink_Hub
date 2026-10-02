@@ -1,5 +1,6 @@
 from django.db import models
 from artists.models import ProfessionalProfile, Category
+from django.core.exceptions import ValidationError
 
 
 class Studio(models.Model):
@@ -73,3 +74,55 @@ class StudioMembership(models.Model):
             f"{self.professional} - "
             f"{self.studio} ({self.get_role_display()})"
         )
+
+
+class EmployeeService(models.Model):
+    membership = models.ForeignKey(
+        StudioMembership,
+        on_delete=models.CASCADE,
+        related_name="employee_services",
+    )
+
+    service = models.ForeignKey(
+        "artists.Service",
+        on_delete=models.CASCADE,
+        related_name="employee_services",
+    )
+
+    price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+    )
+
+    duration_minutes = models.PositiveIntegerField()
+
+    is_active = models.BooleanField(
+        default=True,
+    )
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["membership", "service"],
+                name="unique_membership_service",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.membership.professional} - {self.service}"
+
+    def clean(self):
+        if (
+            self.membership_id
+            and self.service_id
+            and self.membership.studio_id != self.service.studio_id
+        ):
+            raise ValidationError(
+                {
+                    "service": (
+                        "Employee service must belong "
+                        "to the same studio as the membership."
+                    )
+                }
+            )
