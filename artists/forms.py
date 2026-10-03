@@ -29,31 +29,6 @@ class ProfessionalProfileForm(forms.ModelForm):
             "styles": forms.CheckboxSelectMultiple(),
         }
 
-    def clean_categories(self):
-        categories = self.cleaned_data["categories"]
-
-        if self.instance.pk:
-            used_category_ids = set(
-                self.instance.services.values_list(
-                   "category_id",
-                    flat=True,
-                )
-            )
-
-            selected_category_ids = set(
-                categories.values_list(
-                    "id",
-                    flat=True,
-                )
-            )
-    
-            if not used_category_ids.issubset(selected_category_ids):
-                raise forms.ValidationError(
-                     "Nie można usunąć kategorii używanej przez istniejące usługi."
-                )
-
-        return categories
-
 
 class PortfolioItemForm(forms.ModelForm):
     class Meta:
@@ -84,7 +59,9 @@ class PortfolioItemForm(forms.ModelForm):
         self.fields["service"].empty_label = "Brak powiązanej usługi"
 
         if professional is not None:
-            self.fields["service"].queryset = professional.services.all()
+            self.fields["service"].queryset = Service.objects.filter(
+                employee_services__membership__professional=professional,
+            ).distinct()
         else:
             self.fields["service"].queryset = (
                 self.fields["service"].queryset.none()
@@ -111,13 +88,14 @@ class ServiceForm(forms.ModelForm):
             "is_active": "Usługa aktywna",
         }
 
-    def __init__(self, *args, professional=None, **kwargs):
+    def __init__(self, *args, studio=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["category"].empty_label = "Wybierz kategorię"
 
-        if professional is not None:
-            self.fields["category"].queryset = professional.categories.all()
+        if studio is not None:
+            self.instance.studio = studio
+            self.fields["category"].queryset = studio.categories.all()
         else:
             self.fields["category"].queryset = (
                 self.fields["category"].queryset.none()

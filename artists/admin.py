@@ -67,7 +67,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ServiceAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "professional",
+        "studio",
         "category",
         "price",
         "duration_minutes",
@@ -81,5 +81,5 @@ class ServiceAdmin(admin.ModelAdmin):
 
     search_fields = (
         "name",
-        "professional__studio_name",
+        "studio__name",
     )

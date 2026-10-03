@@ -43,7 +43,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_can_be_created(self):
         service = Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Haircut",
@@ -54,13 +53,11 @@ class ServiceModelTests(TestCase):
         self.assertEqual(service.name, "Haircut")
         self.assertEqual(service.price, Decimal("300.00"))
         self.assertEqual(service.duration_minutes, 60)
-        self.assertEqual(service.professional, self.profile)
         self.assertEqual(service.studio, self.studio)
         self.assertEqual(service.category, self.category)
 
     def test_service_string_representation(self):
         service = Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Full-day tattoo session",
@@ -71,7 +68,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_is_active_by_default(self):
         service = Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Small tattoo",
@@ -82,7 +78,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_duration_is_optional(self):
         service = Service.objects.create(
-            professional=self.profile,  #legacy  
             studio=self.studio,
             category=self.category,
             name="Tattoo consultation",
@@ -93,7 +88,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_category_must_belong_to_studio(self):
         service = Service(
-            professional=self.profile,  # legacy
             studio=self.studio,
             category=self.other_category,
             name="Ear piercing",
@@ -104,8 +98,7 @@ class ServiceModelTests(TestCase):
             service.full_clean()
 
     def test_service_category_can_belong_to_studio(self):
-        service = Service(
-            professional=self.profile,  # legacy
+        service = Service.objects.create(
             studio=self.studio,
             category=self.category,
             name="Haircut",
@@ -115,22 +108,20 @@ class ServiceModelTests(TestCase):
 
         service.full_clean()
 
-    def test_services_are_deleted_with_professional_profile(self):
+    def test_services_are_deleted_with_studio(self):
         Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Small tattoo",
             price=Decimal("300.00"),
         )
 
-        self.profile.delete()
+        self.studio.delete()
 
         self.assertEqual(Service.objects.count(), 0)
 
     def test_category_used_by_service_cannot_be_deleted(self):
         Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Small tattoo",
@@ -140,9 +131,8 @@ class ServiceModelTests(TestCase):
         with self.assertRaises(ProtectedError):
             self.category.delete()
 
-    def test_professional_can_have_multiple_services(self):
+    def test_studio_can_have_multiple_services(self):
         Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Small tattoo",
@@ -150,18 +140,16 @@ class ServiceModelTests(TestCase):
         )
 
         Service.objects.create(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Full-day session",
             price=Decimal("1800.00"),
         )
 
-        self.assertEqual(self.profile.services.count(), 2)
+        self.assertEqual(self.studio.services.count(), 2)
 
     def test_service_price_must_be_greater_than_zero(self):
         service = Service(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Test service",
@@ -173,7 +161,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_price_cannot_be_negative(self):
         service = Service(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Test service",
@@ -185,7 +172,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_duration_must_be_greater_than_zero(self):
         service = Service(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category,
             name="Test service",
@@ -198,7 +184,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_duration_can_be_empty(self):
         service = Service(
-            professional=self.profile,  #legacy
             studio=self.studio,
             category=self.category, 
             name="Test service",
@@ -210,7 +195,6 @@ class ServiceModelTests(TestCase):
 
     def test_service_can_belong_to_studio(self):
         service = Service.objects.create(
-            professional=self.profile,  # legacy
             studio=self.studio,
             category=self.category,
             name="Strzyżenie męskie",

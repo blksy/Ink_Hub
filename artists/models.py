@@ -154,38 +154,15 @@ class PortfolioItem(models.Model):
         auto_now_add=True,
     )
 
-    def clean(self):
-        if (
-            self.service_id
-            and self.professional_profile_id
-            and self.service.professional_id != self.professional_profile_id
-        ):
-            raise ValidationError(
-                {
-                    "service": (
-                        "Portfolio item can only use a service "
-                        "belonging to the same professional."
-                    )
-                }
-            )
-
     def __str__(self):
         return self.title or f"Portfolio item #{self.pk}"
 
 
 class Service(models.Model):
-    professional = models.ForeignKey(
-        ProfessionalProfile,
-        on_delete=models.CASCADE,
-        related_name="services",
-    )
-
     studio = models.ForeignKey(
         "studios.Studio",
         on_delete=models.CASCADE,
         related_name="services",
-        blank=True,
-        null=True,
     )
 
     category = models.ForeignKey(

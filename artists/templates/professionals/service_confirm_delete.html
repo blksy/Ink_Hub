@@ -14,6 +14,6 @@
       {% csrf_token %}
       <button type="submit">Tak, usuń</button>
     </form>
-    <a href="{% url 'professionals:professional-detail' object.professional.pk %}">Anuluj</a>
+    <a href="{% url 'professionals:professional-detail' request.user.professional_profile.pk %}">Anuluj</a>
   </body>
 </html>

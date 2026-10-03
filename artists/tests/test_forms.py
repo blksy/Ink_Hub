@@ -4,15 +4,21 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from io import BytesIO
 from decimal import Decimal
-from artists.forms import ProfessionalProfileForm, PortfolioItemForm, ServiceForm
+from artists.forms import ProfessionalProfileForm, PortfolioItemForm
 from artists.models import (
     ProfessionalProfile,
     TattooStyle, 
     Service, 
     Category,
 )
+from studios.models import (
+    EmployeeService,
+    Studio,
+    StudioMembership,
+)
 
 User = get_user_model()
+
 
 class ProfessionalProfileFormTests(TestCase):
     def setUp(self):
@@ -107,82 +113,6 @@ class ProfessionalProfileFormTests(TestCase):
             professional.categories.all(),
         )
 
-    def test_cannot_remove_category_used_by_existing_service(self):
-        category = Category.objects.create(
-            name="Hair",
-            slug="hair",
-        )
-
-        self.professional.categories.add(category)
-
-        Service.objects.create(
-            professional=self.professional,
-            category=category,
-           name="Haircut",
-            price=Decimal("100.00"),
-        )
-
-        form = ProfessionalProfileForm(
-            data={
-                "studio_name": "Beauty Studio",
-                "bio": "Beauty services.",
-                "location": "Poznań",
-                "categories": [],
-                "styles": [],
-            },
-            instance=self.professional,
-        )
-
-        self.assertFalse(form.is_valid())
-        self.assertIn("categories", form.errors)
-
-    def test_can_remove_category_not_used_by_service(self):
-        used_category = Category.objects.create(
-            name="Hair",
-            slug="hair",
-        )
-
-        unused_category = Category.objects.create(
-            name="Nails",
-            slug="nails",
-        )
-
-        self.professional.categories.add(
-            used_category,
-            unused_category,
-        )
-
-        Service.objects.create(
-            professional=self.professional,
-            category=used_category,
-            name="Haircut",
-            price=Decimal("100.00"),
-        )
-
-        form = ProfessionalProfileForm(
-            data={
-                "studio_name": "Beauty Studio",
-                "bio": "Beauty services.",
-                "location": "Poznań",
-                "categories": [used_category.pk],
-                "styles": [],
-            },
-            instance=self.professional,
-        )
-
-        self.assertTrue(form.is_valid(), form.errors)
-
-        professional = form.save()
-
-        self.assertIn(
-            used_category,
-            professional.categories.all(),
-        )
-        self.assertNotIn(
-            unused_category,
-            professional.categories.all(),
-        )
-
 
 class PortfolioItemFormTests(TestCase):
     def setUp(self):
@@ -206,13 +136,31 @@ class PortfolioItemFormTests(TestCase):
             slug="tattoo",
         )
 
-        self.professional.categories.add(self.category)
+        self.studio = Studio.objects.create(
+            name="Ink House",
+            location="Poznań",
+        )
+
+        self.studio.categories.add(self.category)
+
+        self.membership = StudioMembership.objects.create(
+            studio=self.studio,
+            professional=self.professional,
+            role=StudioMembership.Role.EMPLOYEE,
+        )
 
         self.service = Service.objects.create(
-            professional=self.professional,
+            studio=self.studio,
             category=self.category,
             name="Tattoo session",
             price=Decimal("500.00"),
+        )
+
+        self.employee_service = EmployeeService.objects.create(
+            membership=self.membership,
+            service=self.service,
+            price=Decimal("500.00"),
+            duration_minutes=120,
         )
 
     def create_test_image(self):
@@ -283,7 +231,7 @@ class PortfolioItemFormTests(TestCase):
         self.assertFalse(form.fields["final_price"].required)
         self.assertFalse(form.fields["sessions_count"].required)
 
-    def test_service_field_contains_only_professionals_services(self):
+    def test_service_field_contains_only_services_assigned_to_professional(self):
         other_user = User.objects.create_user(
             email="other-professional@example.com",
             password="InkHubTest2026!x",
@@ -294,13 +242,31 @@ class PortfolioItemFormTests(TestCase):
             user=other_user,
         )
 
-        other_professional.categories.add(self.category)
+        other_studio = Studio.objects.create(
+            name="Other Studio",
+            location="Poznań",
+        )
+
+        other_studio.categories.add(self.category)
+
+        other_membership = StudioMembership.objects.create(
+            studio=other_studio,
+            professional=other_professional,
+            role=StudioMembership.Role.EMPLOYEE,
+        )
 
         other_service = Service.objects.create(
-            professional=other_professional,
+            studio=other_studio,
             category=self.category,
             name="Other service",
             price=Decimal("300.00"),
+        )
+
+        EmployeeService.objects.create(
+            membership=other_membership,
+            service=other_service,
+            price=Decimal("300.00"),
+            duration_minutes=60,
         )
 
         form = PortfolioItemForm(
@@ -319,3 +285,19 @@ class PortfolioItemFormTests(TestCase):
             form.fields["service"].queryset.exists()
         )
     
+    def test_service_field_excludes_unassigned_service_from_same_studio(self):
+        unassigned_service = Service.objects.create(
+            studio=self.studio,
+            category=self.category,
+            name="Piercing consultation",
+            price=Decimal("200.00"),
+        )
+
+        form = PortfolioItemForm(
+            professional=self.professional,
+        )
+
+        queryset = form.fields["service"].queryset
+
+        self.assertIn(self.service, queryset)
+        self.assertNotIn(unassigned_service, queryset)

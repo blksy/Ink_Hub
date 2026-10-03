@@ -47,30 +47,30 @@
     {% endif %}
     <hr />
     <h2>Cennik</h2>
-    {% if user.is_authenticated and user == professional.user %}
-      <p>
-        <a href="{% url 'professionals:service-create' %}">Dodaj usługę</a>
-      </p>
-    {% endif %}
-    {% if services %}
+    {% if employee_services %}
       <ul>
-        {% for service in services %}
+        {% for employee_service in employee_services %}
           <li>
-            <h3>{{ service.name }}</h3>
-            <p>Kategoria: {{ service.category.name }}</p>
-            {% if service.description %}
-              <p>{{ service.description }}</p>
+            <h3>{{ employee_service.service.name }}</h3>
+            <p>Studio: {{ employee_service.membership.studio.name }}</p>
+            <p>Kategoria: {{ employee_service.service.category.name }}</p>
+            {% if employee_service.service.description %}
+              <p>{{ employee_service.service.description }}</p>
             {% endif %}
-            <p>Cena: {{ service.price }} zł</p>
-            {% if service.duration_minutes %}
-              <p>Czas trwania: {{ service.duration_minutes }} min</p>
+            <p>Cena: {{ employee_service.price }} zł</p>
+            <p>
+              Czas trwania:
+              {{ employee_service.duration_minutes }} min
+            </p>
+            {% if not employee_service.is_active %}
+              <p>
+                <strong>Usługa nieaktywna dla tego pracownika</strong>
+              </p>
             {% endif %}
-            {% if not service.is_active %}
-              <p><strong>Usługa nieaktywna</strong></p>
-            {% endif %}
-            {% if user.is_authenticated and user == professional.user %}
-              <a href="{% url 'professionals:service-update' service.pk %}">Edytuj</a>
-              <a href="{% url 'professionals:service-delete' service.pk %}">Usuń</a>
+            {% if not employee_service.service.is_active %}
+              <p>
+                <strong>Usługa nieaktywna w studio</strong>
+              </p>
             {% endif %}
           </li>
         {% endfor %}

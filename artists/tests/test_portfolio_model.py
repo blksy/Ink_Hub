@@ -1,8 +1,7 @@
 from decimal import Decimal
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-
+from studios.models import Studio
 from artists.models import (
     PortfolioItem,
     ProfessionalProfile, 
@@ -36,8 +35,15 @@ class PortfolioItemModelTests(TestCase):
 
         self.profile.categories.add(self.category)
 
+        self.studio = Studio.objects.create(
+            name="Ink House",
+            location="Poznań",
+        )
+
+        self.studio.categories.add(self.category)
+
         self.service = Service.objects.create(
-            professional=self.profile,
+            studio=self.studio,
             category=self.category,
             name="Tattoo session",
             price=Decimal("500.00"),
@@ -137,7 +143,7 @@ class PortfolioItemModelTests(TestCase):
         self.assertIsNone(portfolio_item.final_price)
         self.assertIsNone(portfolio_item.sessions_count)
 
-    def test_portfolio_item_can_use_own_service(self):
+    def test_portfolio_item_can_use_service(self):
         portfolio_item = PortfolioItem(
             professional_profile=self.profile,
             service=self.service,
@@ -157,36 +163,6 @@ class PortfolioItemModelTests(TestCase):
         portfolio_item.full_clean()
 
         self.assertIsNone(portfolio_item.service)       
-
-    def test_portfolio_item_cannot_use_another_professionals_service(self):
-        other_user = User.objects.create_user(
-            email="other@example.com",
-            password="testpass123",
-            role=User.Role.PROFESSIONAL,
-        )
-
-        other_profile = ProfessionalProfile.objects.create(
-            user=other_user,
-            studio_name="Other Studio",
-        )
-
-        other_profile.categories.add(self.category)
-
-        other_service = Service.objects.create(
-            professional=other_profile,
-            category=self.category,
-            name="Other Service",
-            price=Decimal("100.00"),
-        )
-
-        portfolio_item = PortfolioItem(
-            professional_profile=self.profile,
-            service=other_service,
-            image="test.jpg",
-        )
-
-        with self.assertRaises(ValidationError):
-            portfolio_item.full_clean()
 
     def test_portfolio_item_can_exist_without_tattoo_styles(self):
         portfolio_item = PortfolioItem(

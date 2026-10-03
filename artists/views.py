@@ -13,8 +13,11 @@ from .forms import (
 )
 
 from django.urls import reverse, reverse_lazy
-from .mixins import ProfessionalRequiredMixin
+from .mixins import ProfessionalRequiredMixin, StudioManagementRequiredMixin
 from .models import ProfessionalProfile, PortfolioItem, Service
+from studios.models import EmployeeService, StudioMembership
+
+
 
 class ProfessionalListView(ListView):
     model = ProfessionalProfile
@@ -30,7 +33,14 @@ class ProfessionalDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        services = self.object.services.select_related("category")
+        employee_services = EmployeeService.objects.filter(
+            membership__professional=self.object,
+            membership__status=StudioMembership.Status.ACTIVE,
+        ).select_related(
+            "service",
+            "service__category",
+            "membership__studio",
+        )
 
         is_owner = (
             self.request.user.is_authenticated
@@ -38,9 +48,12 @@ class ProfessionalDetailView(DetailView):
         )
 
         if not is_owner:
-            services = services.filter(is_active=True)
+            employee_services = employee_services.filter(
+                is_active=True,
+                service__is_active=True,
+            )
 
-        context["services"] = services
+        context["employee_services"] = employee_services
 
         return context
 
@@ -120,19 +133,15 @@ class PortfolioItemDeleteView(ProfessionalRequiredMixin, DeleteView):
         )
 
 
-class ServiceCreateView(ProfessionalRequiredMixin, CreateView):
+class ServiceCreateView(ProfessionalRequiredMixin, StudioManagementRequiredMixin, CreateView):
     model = Service
     form_class = ServiceForm
     template_name = "professionals/service_form.html"
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["professional"] = self.request.user.professional_profile
+        kwargs["studio"] = self.studio
         return kwargs
-
-    def form_valid(self, form):
-        form.instance.professional = self.request.user.professional_profile
-        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse_lazy(
@@ -143,19 +152,19 @@ class ServiceCreateView(ProfessionalRequiredMixin, CreateView):
         )
 
 
-class ServiceUpdateView(ProfessionalRequiredMixin, UpdateView):
+class ServiceUpdateView(ProfessionalRequiredMixin, StudioManagementRequiredMixin, UpdateView):
     model = Service
     form_class = ServiceForm
     template_name = "professionals/service_form.html"
 
     def get_queryset(self):
         return Service.objects.filter(
-            professional=self.request.user.professional_profile
+            studio=self.studio
         )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["professional"] = self.request.user.professional_profile
+        kwargs["studio"] = self.studio
         return kwargs
 
     def get_success_url(self):
@@ -167,13 +176,13 @@ class ServiceUpdateView(ProfessionalRequiredMixin, UpdateView):
         )
 
 
-class ServiceDeleteView(ProfessionalRequiredMixin, DeleteView):
+class ServiceDeleteView(ProfessionalRequiredMixin, StudioManagementRequiredMixin, DeleteView):
     model = Service
     template_name = "professionals/service_confirm_delete.html"
 
     def get_queryset(self):
         return Service.objects.filter(
-            professional=self.request.user.professional_profile
+            studio=self.studio,
         )
 
     def get_success_url(self):

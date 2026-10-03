@@ -182,7 +182,6 @@ class EmployeeServiceModelTests(TestCase):
         )
 
         self.service = Service.objects.create(
-            professional=self.profile,  # legacy — na razie wymagane
             studio=self.studio,
             category=self.category,
             name="Strzyżenie męskie",
@@ -240,8 +239,9 @@ class EmployeeServiceModelTests(TestCase):
             location="Poznań",
         )
 
+        other_studio.categories.add(self.category)
+
         other_service = Service.objects.create(
-            professional=self.profile,
             studio=other_studio,
             category=self.category,
             name="Other service",
