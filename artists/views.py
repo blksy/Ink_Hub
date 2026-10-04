@@ -12,8 +12,9 @@ from .forms import (
     ServiceForm,
 )
 
+from studios.mixins import StudioManagementRequiredMixin
 from django.urls import reverse, reverse_lazy
-from .mixins import ProfessionalRequiredMixin, StudioManagementRequiredMixin
+from .mixins import ProfessionalRequiredMixin
 from .models import ProfessionalProfile, PortfolioItem, Service
 from studios.models import EmployeeService, StudioMembership
 

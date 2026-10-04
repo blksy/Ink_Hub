@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ studio.name }}</title>
+  </head>
+  <body>
+    <h1>{{ studio.name }}</h1>
+    {% if studio.logo %}
+      <img src="{{ studio.logo.url }}" alt="{{ studio.name }}" width="200" />
+    {% endif %}
+    {% if studio.description %}
+      <p>{{ studio.description }}</p>
+    {% endif %}
+    <p>Lokalizacja: {{ studio.location }}</p>
+    {% if can_manage_studio %}
+      <p>
+        <a href="{% url 'studios:studio-update' studio_pk=studio.pk %}">Edytuj studio</a>
+      </p>
+    {% endif %}
+    <hr />
+    <h2>Kategorie</h2>
+    {% if studio.categories.exists %}
+      <ul>
+        {% for category in studio.categories.all %}
+          <li>{{ category.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Studio nie ma jeszcze przypisanych kategorii.</p>
+    {% endif %}
+    <hr />
+    <h2>Usługi</h2>
+    {% if services %}
+      <ul>
+        {% for service in services %}
+          <li>
+            <h3>{{ service.name }}</h3>
+            <p>Kategoria: {{ service.category.name }}</p>
+            {% if service.description %}
+              <p>{{ service.description }}</p>
+            {% endif %}
+            <p>Cena bazowa: {{ service.price }} zł</p>
+            {% if service.duration_minutes %}
+              <p>
+                Bazowy czas trwania:
+                {{ service.duration_minutes }} min
+              </p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Studio nie ma jeszcze aktywnych usług.</p>
+    {% endif %}
+    <hr />
+    <h2>Zespół</h2>
+    {% if memberships %}
+      <ul>
+        {% for membership in memberships %}
+          <li>
+            {% if membership.professional.profile_image %}
+              <img src="{{ membership.professional.profile_image.url }}"
+                   alt="{{ membership.professional }}"
+                   width="100" />
+            {% endif %}
+            <a href="{% url 'professionals:professional-detail' membership.professional.pk %}">{{ membership.professional }}</a>
+            <p>Rola: {{ membership.get_role_display }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Studio nie ma jeszcze członków zespołu.</p>
+    {% endif %}
+  </body>
+</html>
