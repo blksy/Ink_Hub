@@ -1,0 +1,200 @@
+from decimal import Decimal
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+
+from artists.models import Category, ProfessionalProfile, Service
+from studios.models import Studio, StudioMembership
+
+
+User = get_user_model()
+
+
+class ServiceDeleteViewTests(TestCase):
+    def setUp(self):
+        self.professional_user = User.objects.create_user(
+            email="professional@example.com",
+            password="testpass123",
+            role=User.Role.PROFESSIONAL,
+        )
+
+        self.professional = ProfessionalProfile.objects.create(
+            user=self.professional_user,
+        )
+
+        self.studio = Studio.objects.create(
+            name="Test Studio",
+            location="Poznań",
+        )
+
+        self.category = Category.objects.create(
+            name="Tattoo",
+            slug="tattoo",
+        )
+
+        self.studio.categories.add(self.category)
+
+        self.membership = StudioMembership.objects.create(
+            studio=self.studio,
+            professional=self.professional,
+            role=StudioMembership.Role.OWNER,
+        )
+
+        self.service = Service.objects.create(
+            studio=self.studio,
+            category=self.category,
+            name="Small tattoo",
+            price="300.00",
+            duration_minutes=60,
+        )
+
+        self.client_user = User.objects.create_user(
+            email="client@example.com",
+            password="testpass123",
+            role=User.Role.CLIENT,
+        )
+
+        self.other_user = User.objects.create_user(
+            email="other@example.com",
+            password="testpass123",
+            role=User.Role.PROFESSIONAL,
+        )
+
+        self.other_professional = ProfessionalProfile.objects.create(
+            user=self.other_user,
+        )
+
+        self.url = reverse(
+            "professionals:service-delete",
+            kwargs={
+                "studio_pk": self.studio.pk,
+                "pk": self.service.pk
+            },
+        )
+
+    def test_owner_can_access_service_delete_view(self):
+        self.client.force_login(self.professional_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response,
+            "professionals/service_confirm_delete.html",
+        )
+
+    def test_get_does_not_delete_service(self):
+        self.client.force_login(self.professional_user)
+
+        self.client.get(self.url)
+
+        self.assertTrue(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+    def test_anonymous_user_is_redirected_to_login(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_client_cannot_delete_service(self):
+        self.client.force_login(self.client_user)
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+    def test_professional_without_membership_cannot_delete_service(self):
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+    def test_owner_can_delete_service(self):
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+    def test_manager_can_access_service_delete_view(self):
+        self.membership.role = StudioMembership.Role.MANAGER
+        self.membership.save()
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+
+
+    def test_employee_cannot_delete_service(self):
+        self.membership.role = StudioMembership.Role.EMPLOYEE
+        self.membership.save()
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+
+    def test_inactive_member_cannot_delete_service(self):
+        self.membership.status = StudioMembership.Status.INACTIVE
+        self.membership.save()
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Service.objects.filter(pk=self.service.pk).exists()
+        )
+
+    def test_cannot_delete_service_from_another_studio(self):
+        other_studio = Studio.objects.create(
+            name="Other Studio",
+            location="Poznań",
+        )
+
+        other_studio.categories.add(self.category)
+
+        other_service = Service.objects.create(
+            studio=other_studio,
+            category=self.category,
+            name="Other studio service",
+            price=Decimal("400.00"),
+            duration_minutes=90,
+        )
+
+        url = reverse(
+            "professionals:service-delete",
+            kwargs={
+                "studio_pk": self.studio.pk,
+                "pk": other_service.pk,
+            },
+        )
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(url)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(
+            Service.objects.filter(pk=other_service.pk).exists()
+        )
