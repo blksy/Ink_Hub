@@ -1,4 +1,6 @@
+import uuid
 from django.db import models
+from django.db.models import Q
 from artists.models import ProfessionalProfile, Category
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
@@ -148,3 +150,55 @@ class EmployeeService(models.Model):
                     )
                 }
             )
+
+
+class StudioInvitation(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        ACCEPTED = "ACCEPTED", "Accepted"
+        EXPIRED = "EXPIRED", "Expired"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    studio = models.ForeignKey(
+        Studio,
+        on_delete=models.CASCADE,
+        related_name="invitations",
+    )
+
+    email = models.EmailField()
+
+    role = models.CharField(
+        max_length=20,
+        choices=StudioMembership.Role.choices,
+        default=StudioMembership.Role.EMPLOYEE,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["studio", "email"],
+                condition=Q(status="PENDING"),
+                name="unique_pending_invitation_per_studio_email",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.email} - {self.studio}"
