@@ -60,5 +60,15 @@ class StudioInvitationForm(forms.ModelForm):
            )
         return email
 
+    def clean_role(self):
+        role = self.cleaned_data["role"]
+    
+        if role == StudioMembership.Role.OWNER:
+            raise ValidationError(
+                "Nie można zaprosić użytkownika jako właściciela studia."
+            )
+    
+        return role
+
 
     

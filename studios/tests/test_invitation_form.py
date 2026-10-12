@@ -88,3 +88,11 @@ class StudioInvitationFormTests(TestCase):
         form = StudioInvitationForm(data=data, studio=self.studio)
         self.assertTrue(form.is_valid())
 
+    def test_cannot_invite_as_owner(self):
+        data = {
+            "email": "piotr@example.com",
+            "role": StudioMembership.Role.OWNER,
+        }
+        form = StudioInvitationForm(data=data, studio=self.studio)
+        self.assertFalse(form.is_valid())
+        self.assertIn("role" , form.errors)
