@@ -147,3 +147,68 @@ class StudioInvitationModelTests(TestCase):
             new_invitation.status,
             StudioInvitation.Status.PENDING,
         )
+
+    def test_future_pending_invitation_is_valid(self):
+        invitation = StudioInvitation.objects.create(
+            studio=self.studio,
+            email="employee@example.com",
+           expires_at=timezone.now() + timedelta(days=7),
+        )
+
+        self.assertTrue(
+            invitation.is_valid()
+        )
+
+    def test_past_invitation_is_expired(self):
+        invitation = StudioInvitation.objects.create(
+            studio=self.studio,
+            email="employee@example.com",
+            expires_at=timezone.now() - timedelta(days=1),
+        )
+
+        self.assertTrue(
+            invitation.is_expired()
+        )
+
+    def test_expired_pending_invitation_is_not_valid(self):
+        invitation = StudioInvitation.objects.create(
+            studio=self.studio,
+            email="employee@example.com",
+            expires_at=timezone.now() - timedelta(days=1),
+        )
+
+        self.assertFalse(
+            invitation.is_valid()
+        )
+
+    def test_accepted_invitation_is_not_valid(self):
+        invitation = StudioInvitation.objects.create(
+            studio=self.studio,
+            email="employee@example.com",
+            status=StudioInvitation.Status.ACCEPTED,
+            expires_at=timezone.now() + timedelta(days=7),
+        )
+
+        self.assertFalse(
+            invitation.is_valid()
+        )
+
+    def test_invitation_expires_after_seven_days_by_default(self):
+        before_creation = timezone.now()
+
+        invitation = StudioInvitation.objects.create(
+            studio=self.studio,
+            email="employee@example.com",
+        )
+
+        after_creation = timezone.now()
+
+        self.assertGreaterEqual(
+            invitation.expires_at,
+            before_creation + timedelta(days=7),
+        )
+
+        self.assertLessEqual(
+           invitation.expires_at,
+            after_creation + timedelta(days=7),
+        )

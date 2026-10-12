@@ -5,7 +5,11 @@ from artists.models import ProfessionalProfile, Category
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from datetime import timedelta
+from django.utils import timezone
 
+def default_invitation_expiry():  
+    return timezone.now() + timedelta(days=7)
 
 class Studio(models.Model):
     name = models.CharField(max_length=150)
@@ -111,7 +115,6 @@ class EmployeeService(models.Model):
         default=True,
     )
 
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
@@ -189,7 +192,18 @@ class StudioInvitation(models.Model):
         auto_now_add=True,
     )
 
-    expires_at = models.DateTimeField()
+    def is_expired(self):
+        return self.expires_at <= timezone.now()
+
+    def is_valid(self):
+        return (
+            self.status == self.Status.PENDING
+            and not self.is_expired()
+        )
+
+    expires_at = models.DateTimeField(
+        default=default_invitation_expiry
+    )
 
     class Meta:
         constraints = [
