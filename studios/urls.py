@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import StudioCreateView, StudioDetailView, StudioUpdateView
+from .views import StudioCreateView, StudioDetailView, StudioInvitationCreateView, StudioUpdateView
 
 
 app_name = "studios"
@@ -21,5 +21,10 @@ urlpatterns = [
         "<int:studio_pk>/edit/",
         StudioUpdateView.as_view(),
         name="studio-update",
+    ),
+    path(
+        "<int:studio_pk>/invitations/create/",
+        StudioInvitationCreateView.as_view(),
+        name="studio-invitation-create",
     ),
 ]

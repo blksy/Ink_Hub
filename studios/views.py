@@ -1,12 +1,14 @@
 from django.shortcuts import render
 from django.db import transaction
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
 from django.views.generic import CreateView, DetailView, UpdateView, DeleteView
+from django.core.exceptions import PermissionDenied
 
 from artists.mixins import ProfessionalRequiredMixin
 
-from .forms import StudioForm
-from .models import Studio, StudioMembership
+from .forms import StudioForm, StudioInvitationForm
+from .models import Studio, StudioInvitation, StudioMembership
 from .mixins import StudioManagementRequiredMixin
 
 
@@ -109,3 +111,47 @@ class StudioUpdateView(ProfessionalRequiredMixin,  StudioManagementRequiredMixin
     #     return self.studio
 
     # def get_success_url(self):
+
+
+class StudioInvitationCreateView (CreateView):
+    model = StudioInvitation
+    form_class = StudioInvitationForm
+    template_name = "studios/studio_invitation_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.studio = get_object_or_404(
+            Studio,
+            pk=self.kwargs["studio_pk"],
+        )
+        if not request.user.is_authenticated:
+            raise PermissionDenied
+        
+        memberships = StudioMembership.objects.filter(
+            studio=self.studio,
+            professional__user=request.user,
+            status=StudioMembership.Status.ACTIVE,
+            role__in=[
+                StudioMembership.Role.OWNER,
+                StudioMembership.Role.MANAGER,
+            ],
+        )
+
+        if not memberships.exists():
+            raise PermissionDenied
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["studio"] = self.studio
+        return kwargs 
+
+    def form_valid(self, form):
+        form.instance.studio = self.studio
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse(
+            "studios:studio-detail",
+            kwargs={"pk": self.studio.pk},
+        )
