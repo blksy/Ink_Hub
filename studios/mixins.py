@@ -11,6 +11,12 @@ class StudioManagementRequiredMixin:
     )
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied
+
+        if not hasattr(request.user, "professional_profile"):
+            raise PermissionDenied
+        
         self.studio = get_object_or_404(
             Studio,
             pk=kwargs["studio_pk"],

@@ -71,4 +71,16 @@ class StudioInvitationForm(forms.ModelForm):
         return role
 
 
-    
+class StudioMembershipRoleForm(forms.ModelForm):
+    class Meta:
+        model = StudioMembership
+        fields = ("role",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields["role"].choices = [
+            (role, label)
+            for role, label in StudioMembership.Role.choices
+            if role != StudioMembership.Role.OWNER
+        ]

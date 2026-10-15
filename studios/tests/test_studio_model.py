@@ -136,7 +136,7 @@ class StudioModelTests(TestCase):
         )
 
         studio = Studio.objects.create(
-           name="Gentlemen Barber",
+            name="Gentlemen Barber",
             location="Poznań",
         )
 

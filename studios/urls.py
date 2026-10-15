@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import StudioCreateView, StudioDetailView, StudioInvitationCreateView, StudioUpdateView
+from .views import StudioCreateView, StudioDetailView, StudioEmployeeListView, StudioInvitationCreateView, StudioMembershipUpdateView, StudioUpdateView
 
 
 app_name = "studios"
@@ -27,4 +27,14 @@ urlpatterns = [
         StudioInvitationCreateView.as_view(),
         name="studio-invitation-create",
     ),
+    path(
+        "<int:studio_pk>/employees/",
+        StudioEmployeeListView.as_view(),
+        name="studio-employee-list",
+    ),
+    path(
+        "<int:studio_pk>/employees/<int:pk>/update/",
+        StudioMembershipUpdateView.as_view(),
+        name="studio-membership-update",
+    )
 ]

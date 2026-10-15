@@ -2,14 +2,12 @@ from django.shortcuts import render
 from django.db import transaction
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, DetailView, UpdateView, DeleteView
-from django.core.exceptions import PermissionDenied
+from django.views.generic import CreateView, DetailView, UpdateView, ListView
 
-from artists.mixins import ProfessionalRequiredMixin
-
-from .forms import StudioForm, StudioInvitationForm
+from .forms import StudioForm, StudioInvitationForm, StudioMembershipRoleForm
 from .models import Studio, StudioInvitation, StudioMembership
 from .mixins import StudioManagementRequiredMixin
+from artists.mixins import ProfessionalRequiredMixin
 
 
 class StudioCreateView(
@@ -97,49 +95,11 @@ class StudioUpdateView(ProfessionalRequiredMixin,  StudioManagementRequiredMixin
             kwargs={"pk": self.object.pk}
         )
 
-# class StudioDeteleView(ProfessionalRequiredMixin, StudioManagementRequiredMixin, DeleteView):
 
-#     model=Studio
-
-#     allowed_roles = (
-        StudioMembership.Role.OWNER,
-    # )
-
-    # template_name = "studios/studio_confirm_delete.html"
-
-    # def get_object(self, queryset=None):
-    #     return self.studio
-
-    # def get_success_url(self):
-
-
-class StudioInvitationCreateView (CreateView):
+class StudioInvitationCreateView (StudioManagementRequiredMixin,CreateView):
     model = StudioInvitation
     form_class = StudioInvitationForm
     template_name = "studios/studio_invitation_form.html"
-
-    def dispatch(self, request, *args, **kwargs):
-        self.studio = get_object_or_404(
-            Studio,
-            pk=self.kwargs["studio_pk"],
-        )
-        if not request.user.is_authenticated:
-            raise PermissionDenied
-        
-        memberships = StudioMembership.objects.filter(
-            studio=self.studio,
-            professional__user=request.user,
-            status=StudioMembership.Status.ACTIVE,
-            role__in=[
-                StudioMembership.Role.OWNER,
-                StudioMembership.Role.MANAGER,
-            ],
-        )
-
-        if not memberships.exists():
-            raise PermissionDenied
-
-        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -154,4 +114,50 @@ class StudioInvitationCreateView (CreateView):
         return reverse(
             "studios:studio-detail",
             kwargs={"pk": self.studio.pk},
+        )
+
+
+class StudioEmployeeListView(StudioManagementRequiredMixin,ListView,):
+    model = StudioMembership
+    template_name = "studios/studio_employee_list.html"
+    context_object_name = "memberships"
+
+    def get_queryset(self):
+        return self.studio.memberships.filter(
+            studio=self.studio,
+            status=StudioMembership.Status.ACTIVE,
+        ).select_related(
+            "professional",
+            "professional__user",
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["can_manage_studio"] = True
+        context["studio"] = self.studio
+        context["is_owner"] = (
+            self.studio_membership.role == StudioMembership.Role.OWNER
+        )
+        return context
+
+
+class StudioMembershipUpdateView(StudioManagementRequiredMixin, UpdateView):
+    allowed_roles = (
+        StudioMembership.Role.OWNER,
+    )
+    model = StudioMembership
+    form_class = StudioMembershipRoleForm
+    template_name = "studios/studio_membership_form.html"
+
+    def get_queryset(self): 
+        return self.studio.memberships.filter(
+            status=StudioMembership.Status.ACTIVE,
+        ).exclude(
+            role=StudioMembership.Role.OWNER,
+        )
+
+    def get_success_url(self):
+        return reverse(
+            "studios:studio-employee-list",
+            kwargs={"studio_pk": self.studio.pk},
         )

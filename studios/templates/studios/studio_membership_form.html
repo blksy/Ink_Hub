@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Zmiana roli pracownika</title>
+  </head>
+  <body>
+    <h1>Zmień rolę pracownika</h1>
+    <p>Pracownik: {{ object.professional }}</p>
+    <p>Studio: {{ object.studio.name }}</p>
+    <p>Aktualna rola: {{ object.get_role_display }}</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Zapisz zmiany</button>
+    </form>
+    <p>
+      <a href="{% url 'studios:studio-employee-list' studio_pk=object.studio.pk %}">Powrót do listy pracowników</a>
+    </p>
+  </body>
+</html>

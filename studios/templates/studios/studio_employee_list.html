@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Pracownicy - {{ studio.name }}</title>
+  </head>
+  <body>
+    <h1>Pracownicy studia: {{ studio.name }}</h1>
+    <ul>
+      {% for membership in memberships %}
+        <li>
+          {{ membership.professional }}
+          — {{ membership.get_role_display }}
+          {% if is_owner and membership.role != "OWNER" %}
+            <a href="{% url 'studios:studio-membership-update' studio_pk=studio.pk pk=membership.pk %}">Zmień rolę</a>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li>Studio nie ma jeszcze pracowników.</li>
+      {% endfor %}
+    </ul>
+    {% if can_manage_studio %}
+      <p>
+        <a href="{% url 'studios:studio-invitation-create' studio_pk=studio.pk %}">Zaproś pracownika</a>
+      </p>
+    {% endif %}
+    <p>
+      <a href="{% url 'studios:studio-detail' pk=studio.pk %}">Powrót do studia</a>
+    </p>
+  </body>
+</html>
