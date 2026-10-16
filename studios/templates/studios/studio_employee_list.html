@@ -14,6 +14,15 @@
           {% if is_owner and membership.role != "OWNER" %}
             <a href="{% url 'studios:studio-membership-update' studio_pk=studio.pk pk=membership.pk %}">Zmień rolę</a>
           {% endif %}
+          {% if membership.role != "OWNER" %}
+            {% if is_owner or membership.role == "EMPLOYEE" %}
+              <form method="post"
+                    action="{% url 'studios:studio-membership-deactivate' studio_pk=studio.pk pk=membership.pk %}">
+                {% csrf_token %}
+                <button type="submit">Dezaktywuj</button>
+              </form>
+            {% endif %}
+          {% endif %}
         </li>
       {% empty %}
         <li>Studio nie ma jeszcze pracowników.</li>

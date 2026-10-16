@@ -2,7 +2,9 @@ from django.shortcuts import render
 from django.db import transaction
 from django.urls import reverse
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, DetailView, UpdateView, ListView
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic import CreateView, DetailView, UpdateView, ListView, View
 
 from .forms import StudioForm, StudioInvitationForm, StudioMembershipRoleForm
 from .models import Studio, StudioInvitation, StudioMembership
@@ -160,4 +162,35 @@ class StudioMembershipUpdateView(StudioManagementRequiredMixin, UpdateView):
         return reverse(
             "studios:studio-employee-list",
             kwargs={"studio_pk": self.studio.pk},
+        )
+
+
+  
+class StudioMembershipDeactivateView(
+    StudioManagementRequiredMixin,
+    View,
+):
+    def post(self, request, *args, **kwargs):
+        membership = get_object_or_404(
+            StudioMembership,
+            pk=kwargs["pk"],
+            studio=self.studio,
+            status=StudioMembership.Status.ACTIVE,
+        )
+
+        if membership.role == StudioMembership.Role.OWNER:
+            raise PermissionDenied
+
+        if (
+            self.studio_membership.role == StudioMembership.Role.MANAGER
+            and membership.role == StudioMembership.Role.MANAGER
+        ):
+            raise PermissionDenied
+
+        membership.status = StudioMembership.Status.INACTIVE
+        membership.save(update_fields=["status"])
+
+        return redirect(
+            "studios:studio-employee-list",
+            studio_pk=self.studio.pk,
         )
