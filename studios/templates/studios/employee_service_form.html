@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Dodaj usługę pracownika</title>
+  </head>
+  <body>
+    <h1>Dodaj usługę pracownika</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Zapisz usługę</button>
+    </form>
+    <a href="{% url 'studios:studio-detail' pk=view.studio.pk %}">Powrót do studia</a>
+  </body>
+</html>

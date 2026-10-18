@@ -9,6 +9,11 @@
     {% if studio.logo %}
       <img src="{{ studio.logo.url }}" alt="{{ studio.name }}" width="200" />
     {% endif %}
+    {% if can_manage_studio %}
+      <p>
+        <a href="{% url 'professionals:service-create' studio_pk=studio.pk %}">Dodaj usługę do katalogu studia</a>
+      </p>
+    {% endif %}
     {% if studio.description %}
       <p>{{ studio.description }}</p>
     {% endif %}
@@ -31,6 +36,11 @@
     {% endif %}
     <hr />
     <h2>Usługi</h2>
+    {% if can_manage_studio or is_studio_member %}
+      <p>
+        <a href="{% url 'studios:employee-service-create' studio_pk=studio.pk %}">Dodaj usługę pracownika</a>
+      </p>
+    {% endif %}
     {% if services %}
       <ul>
         {% for service in services %}
@@ -72,5 +82,14 @@
     {% else %}
       <p>Studio nie ma jeszcze członków zespołu.</p>
     {% endif %}
+    {% if can_manage_studio %}
+      <p>
+        <a href="{% url 'studios:studio-employee-list' studio_pk=studio.pk %}">Zarządzaj zespołem</a>
+      </p>
+    {% endif %}
+    <hr>
+    <p>
+      <a href="{% url 'studios:studio-list' %}">← Powrót do listy studiów</a>
+    </p>
   </body>
 </html>

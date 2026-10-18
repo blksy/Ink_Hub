@@ -1,14 +1,12 @@
-from django.shortcuts import render
 from django.db import transaction
 from django.urls import reverse
-from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import CreateView, DetailView, UpdateView, ListView, View
 
-from .forms import StudioForm, StudioInvitationForm, StudioMembershipRoleForm
-from .models import Studio, StudioInvitation, StudioMembership
-from .mixins import StudioManagementRequiredMixin
+from .forms import EmployeeServiceForm, StudioForm, StudioInvitationForm, StudioMembershipRoleForm
+from .models import EmployeeService, Studio, StudioInvitation, StudioMembership
+from .mixins import ActiveStudioMembershipRequiredMixin, StudioManagementRequiredMixin
 from artists.mixins import ProfessionalRequiredMixin
 
 
@@ -47,6 +45,20 @@ class StudioDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
+        is_studio_member = False
+
+        if (
+            self.request.user.is_authenticated
+            and hasattr(self.request.user, "professional_profile")
+        ):
+            is_studio_member = StudioMembership.objects.filter(
+                studio=self.object,
+                professional=self.request.user.professional_profile,
+                status=StudioMembership.Status.ACTIVE,
+            ).exists()
+
+        context["is_studio_member"] = is_studio_member
 
         services = self.object.services.filter(
             is_active=True,
@@ -194,3 +206,60 @@ class StudioMembershipDeactivateView(
             "studios:studio-employee-list",
             studio_pk=self.studio.pk,
         )
+
+
+class EmployeeServiceCreateView(
+    ActiveStudioMembershipRequiredMixin,
+    CreateView,
+):
+    model = EmployeeService
+    form_class = EmployeeServiceForm
+    template_name = "studios/employee_service_form.html"
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["studio"] = self.studio
+        kwargs["actor_membership"] = self.studio_membership
+        return kwargs
+
+    def form_valid(self, form):
+        is_manager = self.studio_membership.role in (
+            StudioMembership.Role.OWNER,
+            StudioMembership.Role.MANAGER,
+       )
+
+        if is_manager:
+            target_membership = form.cleaned_data["membership"]
+        else:
+            target_membership = self.studio_membership
+
+        service = form.cleaned_data["service"]
+
+        already_exists = EmployeeService.objects.filter(
+           membership=target_membership,
+            service=service,
+        ).exists()
+
+        if already_exists:
+            form.add_error(
+                "service",
+                "Ta usługa jest już przypisana do pracownika.",
+            )
+            return self.form_invalid(form)
+
+        employee_service = form.save(commit=False)
+        employee_service.membership = target_membership
+        employee_service.save()
+
+        return redirect(
+            "studios:studio-detail",
+            pk=self.studio.pk,
+        )
+
+class StudioListView(ListView):
+    model = Studio
+    template_name = "studios/studio_list.html"
+    context_object_name = "studios"
+
+    def get_queryset(self):
+        return Studio.objects.all().order_by("name")

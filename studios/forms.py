@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Studio, StudioInvitation, StudioMembership
+from .models import EmployeeService, Studio, StudioInvitation, StudioMembership
 
 
 class StudioForm(forms.ModelForm):
@@ -84,3 +84,45 @@ class StudioMembershipRoleForm(forms.ModelForm):
             for role, label in StudioMembership.Role.choices
             if role != StudioMembership.Role.OWNER
         ]
+
+
+class EmployeeServiceForm(forms.ModelForm):
+    membership =  forms.ModelChoiceField(
+        queryset=StudioMembership.objects.none(),
+        required=False,
+        label="Pracownik",
+    )
+
+
+    class Meta:
+        model = EmployeeService
+        fields = (
+            "service",
+            "price",
+            "duration_minutes",
+        )
+
+    def __init__(self, *args, **kwargs):
+        studio = kwargs.pop("studio")
+        actor_membership = kwargs.pop("actor_membership")
+
+        super().__init__(*args, **kwargs)
+
+        self.fields["service"].queryset = studio.services.filter(
+            is_active=True,
+        )
+
+        is_manager = actor_membership.role in (
+            StudioMembership.Role.OWNER,
+            StudioMembership.Role.MANAGER,
+        )
+
+        if is_manager:
+            self.fields["membership"].queryset = (
+                studio.memberships.filter(
+                    status=StudioMembership.Status.ACTIVE,
+                )
+            )
+            self.fields["membership"].required = True
+        else:
+            del self.fields["membership"]
