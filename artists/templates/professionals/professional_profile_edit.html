@@ -7,8 +7,13 @@
   <body>
     <h1>Edytuj profil specjalisty</h1>
     <form method="post" enctype="multipart/form-data">
-      {% csrf_token %} {{ form.as_p }}
+      {% csrf_token %}
+      <h2>Dane osobowe</h2>
+      {{ user_form.as_p }}
+      <h2>Informacje zawodowe</h2>
+      {{ form.as_p }}
       <button type="submit">Zapisz zmiany</button>
     </form>
+    <a href="{% url 'professionals:professional-detail' request.user.professional_profile.pk %}">Wróć do profilu</a>
   </body>
 </html>

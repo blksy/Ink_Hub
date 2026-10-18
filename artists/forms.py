@@ -1,26 +1,40 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from .models import Category, ProfessionalProfile, PortfolioItem, Service
 
-from .models import ProfessionalProfile, PortfolioItem, Service
+User = get_user_model()
+
+
+class UserPersonalDataForm(forms.ModelForm):
+    class Meta:
+        model = User
+
+        fields = (
+            "first_name",
+            "last_name",
+        )
+
+        labels = {
+            "first_name": "Imię",
+            "last_name": "Nazwisko",
+        }
 
 
 class ProfessionalProfileForm(forms.ModelForm):
     class Meta:
         model = ProfessionalProfile
+
         fields = (
-            "studio_name",
             "bio",
-            "location",
             "profile_image",
             "categories",
             "styles",
         )
 
         labels = {
-            "studio_name": "Nazwa studia / salonu",
-            "bio": "Opis",
-            "location": "Lokalizacja",
-            "profile_image": "Zdjęcie profilowe / logo",
-            "categories": "Kategorie usług",
+            "bio": "O mnie",
+            "profile_image": "Zdjęcie profilowe",
+            "categories": "Specjalizacje",
             "styles": "Style tatuażu",
         }
 
@@ -29,6 +43,32 @@ class ProfessionalProfileForm(forms.ModelForm):
             "styles": forms.CheckboxSelectMultiple(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        is_tattoo_artist = False
+
+        if self.is_bound:
+            if hasattr(self.data, "getlist"):
+                selected_categories = self.data.getlist("categories")
+            else:
+                selected_categories = self.data.get("categories", [])
+
+                if not isinstance(selected_categories, (list, tuple)):
+                    selected_categories = [selected_categories]
+
+            is_tattoo_artist = Category.objects.filter(
+                pk__in=selected_categories,
+                slug="tatuaz",
+            ).exists()
+
+        elif self.instance.pk:
+            is_tattoo_artist = self.instance.categories.filter(
+                slug="tatuaz",
+            ).exists()
+
+        if not is_tattoo_artist:
+            self.fields.pop("styles", None)
 
 class PortfolioItemForm(forms.ModelForm):
     class Meta:

@@ -12,13 +12,16 @@ class StudioForm(forms.ModelForm):
             "location",
             "logo",
             "categories",
+            "styles",
         )
+
         labels = {
             "name": "Nazwa studia",
             "description": "Opis",
             "location": "Lokalizacja",
             "logo": "Logo",
             "categories": "Kategorie usług",
+            "styles": "Oferowane style tatuażu",
         }
 
 class StudioInvitationForm(forms.ModelForm):

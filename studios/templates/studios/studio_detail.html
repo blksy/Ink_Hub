@@ -34,6 +34,15 @@
     {% else %}
       <p>Studio nie ma jeszcze przypisanych kategorii.</p>
     {% endif %}
+    {% if studio.styles.exists %}
+      <hr />
+      <h2>Oferowane style tatuażu</h2>
+      <ul>
+        {% for style in studio.styles.all %}
+          <li>{{ style.name }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <hr />
     <h2>Usługi</h2>
     {% if can_manage_studio or is_studio_member %}
@@ -90,6 +99,7 @@
     <hr>
     <p>
       <a href="{% url 'studios:studio-list' %}">← Powrót do listy studiów</a>
+      <a href="{% url 'home' %}">← Powrót do strony głównej</a>
     </p>
   </body>
 </html>

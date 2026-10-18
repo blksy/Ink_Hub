@@ -1,3 +1,4 @@
+
 import tempfile
 
 from django.contrib.auth import get_user_model
@@ -5,7 +6,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from artists.models import ProfessionalProfile, TattooStyle
+from artists.models import Category, ProfessionalProfile, TattooStyle
 
 
 User = get_user_model()
@@ -13,7 +14,7 @@ User = get_user_model()
 
 class ProfessionalProfileUpdateViewTests(TestCase):
     def setUp(self):
-        self.password =  "InkHubTest2026!x"
+        self.password = "InkHubTest2026!x"
 
         self.professional_user = User.objects.create_user(
             email="professional-edit@example.com",
@@ -23,8 +24,7 @@ class ProfessionalProfileUpdateViewTests(TestCase):
 
         self.professional = ProfessionalProfile.objects.create(
             user=self.professional_user,
-            studio_name="Old Studio",
-            location="Poznań",
+            bio="Old bio",
         )
 
         self.client_user = User.objects.create_user(
@@ -33,11 +33,23 @@ class ProfessionalProfileUpdateViewTests(TestCase):
             role=User.Role.CLIENT,
         )
 
-        self.url = reverse("professionals:professional-profile-edit")
+        self.url = reverse(
+            "professionals:professional-profile-edit"
+        )
+
+    def profile_data(self, **overrides):
+        data = {
+            "user-first_name": "Adam",
+            "user-last_name": "Kowalski",
+            "bio": "Updated bio",
+            "categories": [],
+            "styles": [],
+        }
+        data.update(overrides)
+        return data
 
     def test_unauthenticated_user_is_redirected_to_login(self):
         response = self.client.get(self.url)
-
         self.assertEqual(response.status_code, 302)
 
     def test_client_cannot_edit_professional_profile(self):
@@ -63,28 +75,15 @@ class ProfessionalProfileUpdateViewTests(TestCase):
 
         response = self.client.post(
             self.url,
-            data={
-                "studio_name": "New Studio",
-                "bio": "Updated bio",
-                "location": "Wrocław",
-                "styles": [],
-            },
+            data=self.profile_data(),
         )
 
         self.professional.refresh_from_db()
+        self.professional_user.refresh_from_db()
 
-        self.assertEqual(
-            self.professional.studio_name,
-            "New Studio",
-        )
-        self.assertEqual(
-            self.professional.bio,
-            "Updated bio",
-        )
-        self.assertEqual(
-            self.professional.location,
-            "Wrocław",
-        )
+        self.assertEqual(self.professional.bio, "Updated bio")
+        self.assertEqual(self.professional_user.first_name, "Adam")
+        self.assertEqual(self.professional_user.last_name, "Kowalski")
 
         self.assertRedirects(
             response,
@@ -99,40 +98,39 @@ class ProfessionalProfileUpdateViewTests(TestCase):
             email="otherartist@example.com",
             password=self.password,
             role=User.Role.PROFESSIONAL,
+            first_name="Other",
         )
 
         other_professional = ProfessionalProfile.objects.create(
             user=other_user,
-            studio_name="Other Studio",
-            location="Warszawa",
+            bio="Other bio",
         )
 
         self.client.force_login(self.professional_user)
 
         response = self.client.post(
             self.url,
-            data={
-                "studio_name": "My Updated Studio",
-                "bio": "My updated bio",
-                "location": "Poznań",
-                "styles": [],
-            },
-       )
+            data=self.profile_data(bio="My updated bio"),
+        )
+
+        self.assertEqual(response.status_code, 302)
 
         self.professional.refresh_from_db()
         other_professional.refresh_from_db()
+        other_user.refresh_from_db()
 
-        self.assertEqual(
-            self.professional.studio_name,
-            "My Updated Studio",
-        )
-
-        self.assertEqual(
-            other_professional.studio_name,
-            "Other Studio",
-        )
+        self.assertEqual(self.professional.bio, "My updated bio")
+        self.assertEqual(other_professional.bio, "Other bio")
+        self.assertEqual(other_user.first_name, "Other")
 
     def test_professional_can_update_styles(self):
+        tattoo_category = Category.objects.create(
+             name="Tatuaż",
+             slug="tatuaz",
+         )
+
+        self.professional.categories.add(tattoo_category)
+
         style1 = TattooStyle.objects.create(
             name="Blackwork",
             slug="blackwork-test",
@@ -141,17 +139,16 @@ class ProfessionalProfileUpdateViewTests(TestCase):
             name="Realism",
             slug="realism-test",
         )
+
         self.client.force_login(self.professional_user)
 
         response = self.client.post(
             self.url,
-                data={
-                "studio_name": "Test Studio",
-                "bio": "Test bio",
-                "location": "Poznań",
-                "styles": [style1.pk, style2.pk],
-            },
-        )
+            data=self.profile_data(
+                categories=[tattoo_category.pk],
+                styles=[style1.pk, style2.pk],
+            ),
+       )
 
         self.assertEqual(response.status_code, 302)
 
@@ -161,7 +158,29 @@ class ProfessionalProfileUpdateViewTests(TestCase):
             set(self.professional.styles.all()),
             {style1, style2},
         )
-    
+
+    def test_professional_can_update_categories(self):
+        category = Category.objects.create(
+            name="Tatuaż",
+            slug="tatuaz",
+        )
+
+        self.client.force_login(self.professional_user)
+
+        response = self.client.post(
+            self.url,
+            data=self.profile_data(categories=[category.pk]),
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        self.professional.refresh_from_db()
+
+        self.assertIn(
+            category,
+            self.professional.categories.all(),
+        )
+
     def test_professional_can_update_profile_image(self):
         image = SimpleUploadedFile(
             name="profile.gif",
@@ -179,13 +198,7 @@ class ProfessionalProfileUpdateViewTests(TestCase):
 
                 response = self.client.post(
                     self.url,
-                    data={
-                        "studio_name": "Studio With Image",
-                        "bio": "Test bio",
-                       "location": "Poznań",
-                        "styles": [],
-                        "profile_image": image,
-                    },
+                    data=self.profile_data(profile_image=image),
                 )
 
                 self.assertEqual(response.status_code, 302)
@@ -194,7 +207,7 @@ class ProfessionalProfileUpdateViewTests(TestCase):
 
                 self.assertTrue(self.professional.profile_image)
                 self.assertIn(
-                   "professionals/profile_images/",
+                    "professionals/profile_images/",
                     self.professional.profile_image.name,
                 )
 
@@ -203,24 +216,16 @@ class ProfessionalProfileUpdateViewTests(TestCase):
 
         response = self.client.post(
             self.url,
-            data={
-                "studio_name": "Changed Studio",
-                "bio": "Changed bio",
-                "location": "Warszawa",
-                "styles": [999999],
-            },
+            data=self.profile_data(
+                bio="Changed bio",
+                categories=[999999],
+            ),
         )
 
         self.professional.refresh_from_db()
+        self.professional_user.refresh_from_db()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            self.professional.studio_name,
-            "Old Studio",
-        )
-        self.assertEqual(
-            self.professional.location,
-            "Poznań",
-        )
-
-    
+        self.assertEqual(self.professional.bio, "Old bio")
+        self.assertEqual(self.professional_user.first_name, "")
+        self.assertContains(response, "Wybierz poprawną wartość")

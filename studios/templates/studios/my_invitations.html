@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Moje zaproszenia | Artiva</title>
+  </head>
+  <body>
+    <h1>Moje zaproszenia</h1>
+    {% for invitation in invitations %}
+      <article>
+        <h2>{{ invitation.studio.name }}</h2>
+        <p>Rola: {{ invitation.get_role_display }}</p>
+        <p>Ważne do: {{ invitation.expires_at }}</p>
+        {% if invitation.is_valid %}
+          <form method="post"
+                action="{% url 'studios:invitation-accept' invitation.pk %}">
+            {% csrf_token %}
+            <button type="submit">Akceptuj</button>
+          </form>
+          <form method="post"
+                action="{% url 'studios:invitation-reject' invitation.pk %}">
+            {% csrf_token %}
+            <button type="submit">Odrzuć</button>
+          </form>
+        {% else %}
+          <p>Zaproszenie wygasło.</p>
+        {% endif %}
+      </article>
+      <hr />
+    {% empty %}
+      <p>Nie masz obecnie żadnych zaproszeń.</p>
+    {% endfor %}
+    <a href="{% url 'home' %}">Powrót do strony głównej</a>
+  </body>
+</html>

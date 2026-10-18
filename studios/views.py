@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import CreateView, DetailView, UpdateView, ListView, View
+from django.utils import timezone
 
 from .forms import EmployeeServiceForm, StudioForm, StudioInvitationForm, StudioMembershipRoleForm
 from .models import EmployeeService, Studio, StudioInvitation, StudioMembership
@@ -263,3 +264,99 @@ class StudioListView(ListView):
 
     def get_queryset(self):
         return Studio.objects.all().order_by("name")
+
+
+class MyStudioInvitationsView(
+    ProfessionalRequiredMixin,
+    ListView,
+):
+    model = StudioInvitation
+    template_name = "studios/my_invitations.html"
+    context_object_name = "invitations"
+
+    def get_queryset(self):
+        return (
+            StudioInvitation.objects.filter(
+                email__iexact=self.request.user.email,
+                status=StudioInvitation.Status.PENDING,
+            )
+            .select_related("studio")
+            .order_by("-created_at")
+        )
+
+
+class StudioInvitationAcceptView(
+    ProfessionalRequiredMixin,
+    View,
+):
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            StudioInvitation.objects.select_for_update(),
+            pk=kwargs["pk"],
+            email__iexact=request.user.email,
+            status=StudioInvitation.Status.PENDING,
+        )
+
+        if invitation.is_expired():
+            invitation.status = StudioInvitation.Status.EXPIRED
+            invitation.save(update_fields=["status"])
+            raise PermissionDenied("Zaproszenie wygasło.")
+
+        if invitation.role == StudioMembership.Role.OWNER:
+            raise PermissionDenied(
+                "Nie można przyjąć zaproszenia jako właściciel."
+            )
+
+        professional = request.user.professional_profile
+
+        membership, created = (
+            StudioMembership.objects.select_for_update().get_or_create(
+                studio=invitation.studio,
+                professional=professional,
+                defaults={
+                    "role": invitation.role,
+                    "status": StudioMembership.Status.ACTIVE,
+                },
+            )
+        )
+
+        if not created:
+            if membership.status == StudioMembership.Status.ACTIVE:
+                raise PermissionDenied(
+                    "Jesteś już aktywnym członkiem tego studia."
+                )
+
+            membership.role = invitation.role
+            membership.status = StudioMembership.Status.ACTIVE
+            membership.save(update_fields=["role", "status"])
+
+        invitation.status = StudioInvitation.Status.ACCEPTED
+        invitation.save(update_fields=["status"])
+
+        return redirect(
+            "studios:studio-detail",
+            pk=invitation.studio.pk,
+        )
+
+
+class StudioInvitationRejectView(
+    ProfessionalRequiredMixin,
+    View,
+):
+    def post(self, request, *args, **kwargs):
+        invitation = get_object_or_404(
+            StudioInvitation,
+            pk=kwargs["pk"],
+            email__iexact=request.user.email,
+            status=StudioInvitation.Status.PENDING,
+        )
+
+        if invitation.is_expired():
+            invitation.status = StudioInvitation.Status.EXPIRED
+        else:
+            invitation.status = StudioInvitation.Status.REJECTED
+
+        invitation.save(update_fields=["status"])
+
+        return redirect("studios:my-invitations")

@@ -1,7 +1,7 @@
 import uuid
 from django.db import models
 from django.db.models import Q
-from artists.models import ProfessionalProfile, Category
+from artists.models import ProfessionalProfile, Category, TattooStyle
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from decimal import Decimal
@@ -20,16 +20,25 @@ class Studio(models.Model):
         blank=True,
         null=True,
     )
+
     categories = models.ManyToManyField(
         Category,
         related_name="studios",
         blank=True,
     )
+
+    styles = models.ManyToManyField(
+        TattooStyle,
+        related_name="studios",
+        blank=True,
+    )
+
     members = models.ManyToManyField(
         ProfessionalProfile,
         through="StudioMembership",
         related_name="studios",
     )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -52,21 +61,25 @@ class StudioMembership(models.Model):
         on_delete=models.CASCADE,
         related_name="memberships",
     )
+
     professional = models.ForeignKey(
         ProfessionalProfile,
         on_delete=models.CASCADE,
         related_name="studio_memberships",
     )
+
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
         default=Role.EMPLOYEE,
     )
+
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.ACTIVE,
     )
+
     joined_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -159,6 +172,7 @@ class StudioInvitation(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         ACCEPTED = "ACCEPTED", "Accepted"
+        REJECTED = "REJECTED", "Rejected"
         EXPIRED = "EXPIRED", "Expired"
         CANCELLED = "CANCELLED", "Cancelled"
 
