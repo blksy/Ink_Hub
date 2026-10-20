@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import EmployeeServiceCreateView, MyStudioInvitationsView, StudioCreateView, StudioDetailView, StudioEmployeeListView, StudioInvitationAcceptView, StudioInvitationCreateView, StudioInvitationRejectView, StudioListView, StudioMembershipDeactivateView, StudioMembershipUpdateView, StudioUpdateView
+from .views import EmployeeServiceCreateView, EmployeeServiceUpdateView, MyStudioInvitationsView, StudioCreateView, StudioDetailView, StudioEmployeeListView, StudioInvitationAcceptView, StudioInvitationCreateView, StudioInvitationRejectView, StudioListView, StudioMembershipDeactivateView, StudioMembershipUpdateView, StudioUpdateView
 
 
 app_name = "studios"
@@ -51,6 +51,11 @@ urlpatterns = [
         "<int:studio_pk>/employee-services/add/",
         EmployeeServiceCreateView.as_view(),
         name="employee-service-create",
+    ),
+    path(
+        "<int:studio_pk>/employee-services/<int:pk>/edit/",
+        EmployeeServiceUpdateView.as_view(),
+        name="employee-service-update",
     ),
     path(
         "invitations/",

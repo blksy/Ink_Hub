@@ -20,7 +20,6 @@ class PortfolioItemDeleteViewTests(TestCase):
 
         self.professional = ProfessionalProfile.objects.create(
             user=self.professional_user,
-            studio_name="Delete Studio",
         )
 
         self.portfolio_item = PortfolioItem.objects.create(
@@ -84,7 +83,6 @@ class PortfolioItemDeleteViewTests(TestCase):
 
         other_professional = ProfessionalProfile.objects.create(
             user=other_user,
-            studio_name="Other Studio",
         )
 
         other_item = PortfolioItem.objects.create(

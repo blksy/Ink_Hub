@@ -21,19 +21,14 @@ class ProfessionalProfileModelTests(TestCase):
     def test_create_professional_profile(self):
         profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
             bio="Tattoo artist specialising in blackwork.",
-            location="Poznań",
         )
 
         self.assertEqual(profile.user, self.user)
-        self.assertEqual(profile.studio_name, "Black Needle")
-        self.assertEqual(profile.location, "Poznań")
 
     def test_professional_profile_relationship(self):
         profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
         )
 
         self.assertEqual(self.user.professional_profile, profile)
@@ -41,28 +36,25 @@ class ProfessionalProfileModelTests(TestCase):
     def test_user_can_have_only_one_professional_profile(self):
         ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
         )
 
         with self.assertRaises(ValidationError):
             ProfessionalProfile.objects.create(
                 user=self.user,
-                studio_name="Second Studio",
             )
 
-    def test_string_representation_uses_studio_name(self):
+    def test_string_representation_uses_full_name(self):
         self.user.first_name = "Jan"
         self.user.last_name = "Kowalski"
         self.user.save()
 
         profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
     )
 
         self.assertEqual(str(profile), "Jan Kowalski")
         
-    def test_string_representation_uses_email_when_studio_name_is_empty(self):
+    def test_string_representation_uses_email_when_full_name_name_is_empty(self):
         profile = ProfessionalProfile.objects.create(
             user=self.user,
         )
@@ -79,13 +71,11 @@ class ProfessionalProfileModelTests(TestCase):
         with self.assertRaises(ValidationError):
             ProfessionalProfile.objects.create(
                 user=client,
-                studio_name="Client Studio",
         )
 
     def test_professional_can_have_multiple_styles(self):
         profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
        )
 
         blackwork = TattooStyle.objects.create(name="Blackwork", slug="blackwork",)
@@ -107,12 +97,10 @@ class ProfessionalProfileModelTests(TestCase):
 
         first_profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Needle",
     )
 
         second_profile = ProfessionalProfile.objects.create(
             user=second_user,
-            studio_name="Second Studio",
     )
 
         blackwork = TattooStyle.objects.create(name="Blackwork", slug="blackwork",)

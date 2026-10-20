@@ -95,6 +95,7 @@ class PortfolioItemFormTests(TestCase):
                 "title",
                 "description",
                 "image",
+                "studio",
                 "service",
                 "styles",
                 "final_price",

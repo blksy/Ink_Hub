@@ -5,11 +5,23 @@
     <title>Dodaj usługę pracownika</title>
   </head>
   <body>
-    <h1>Dodaj usługę pracownika</h1>
+    <h1>
+      {% if object %}
+        Edytuj usługę pracownika
+      {% else %}
+        Dodaj usługę pracownika
+      {% endif %}
+    </h1>
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit">Zapisz usługę</button>
+      <button type="submit">
+        {% if object %}
+          Zapisz zmiany
+        {% else %}
+          Dodaj usługę
+        {% endif %}
+      </button>
     </form>
     <a href="{% url 'studios:studio-detail' pk=view.studio.pk %}">Powrót do studia</a>
   </body>

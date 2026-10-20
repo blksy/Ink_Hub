@@ -1,14 +1,14 @@
-from django.db import transaction
+from django.db import models, transaction
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.views.generic import CreateView, DetailView, UpdateView, ListView, View
-from django.utils import timezone
 
 from .forms import EmployeeServiceForm, StudioForm, StudioInvitationForm, StudioMembershipRoleForm
 from .models import EmployeeService, Studio, StudioInvitation, StudioMembership
 from .mixins import ActiveStudioMembershipRequiredMixin, StudioManagementRequiredMixin
 from artists.mixins import ProfessionalRequiredMixin
+from artists.models import PortfolioItem
 
 
 class StudioCreateView(
@@ -47,54 +47,89 @@ class StudioDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        is_studio_member = False
+        studio = self.object
 
-        if (
-            self.request.user.is_authenticated
-            and hasattr(self.request.user, "professional_profile")
-        ):
-            is_studio_member = StudioMembership.objects.filter(
-                studio=self.object,
-                professional=self.request.user.professional_profile,
-                status=StudioMembership.Status.ACTIVE,
-            ).exists()
-
-        context["is_studio_member"] = is_studio_member
-
-        services = self.object.services.filter(
+        # 1. Aktywne usługi z katalogu studia
+        services = studio.services.filter(
             is_active=True,
-        ).select_related(
-            "category",
-        )
+        ).select_related("category")
 
-        memberships = self.object.memberships.filter(
+        # 2. Aktywni członkowie zespołu
+        memberships = studio.memberships.filter(
             status=StudioMembership.Status.ACTIVE,
         ).select_related(
             "professional",
             "professional__user",
         )
 
+        # 3. Aktualny użytkownik i jego uprawnienia
+        current_membership = None
         can_manage_studio = False
+        is_studio_member = False
+
+        user = self.request.user
 
         if (
-            self.request.user.is_authenticated
-            and self.request.user.role
-            == self.request.user.Role.PROFESSIONAL
+            user.is_authenticated
+            and hasattr(user, "professional_profile")
         ):
-            can_manage_studio = memberships.filter(
-                professional=self.request.user.professional_profile,
-                role__in=(
+            current_membership = memberships.filter(
+                professional=user.professional_profile,
+            ).first()
+
+            if current_membership:
+                is_studio_member = True
+
+                can_manage_studio = current_membership.role in (
                     StudioMembership.Role.OWNER,
                     StudioMembership.Role.MANAGER,
-                ),
-            ).exists()
+                )
 
-        context["services"] = services
-        context["memberships"] = memberships
-        context["can_manage_studio"] = can_manage_studio
+        # 4. Usługi przypisane do pracowników
+        employee_services = EmployeeService.objects.filter(
+            membership__studio=studio,
+            membership__status=StudioMembership.Status.ACTIVE,
+        ).select_related(
+            "membership",
+            "membership__professional",
+            "membership__professional__user",
+            "service",
+        )
+
+        # Goście widzą tylko aktywne usługi.
+        # Właściciel i manager widzą wszystkie, także wyłączone.
+        # Pracownik widzi aktywne usługi oraz własne wyłączone.
+        if not can_manage_studio:
+            if current_membership:
+                employee_services = employee_services.filter(
+                    models.Q(is_active=True)
+                    | models.Q(membership=current_membership)
+                )
+            else:
+                employee_services = employee_services.filter(
+                    is_active=True,
+                )
+        portfolio_items = PortfolioItem.objects.filter(
+            studio=studio,
+        ).select_related(
+            "professional_profile",
+            "professional_profile__user",
+            "service",
+        ).prefetch_related(
+            "styles",
+        ).order_by("-created_at")
+
+        context.update({
+            "services": services,
+            "memberships": memberships,
+            "employee_services": employee_services,
+            "portfolio_items": portfolio_items,
+            "current_membership": current_membership,
+            "is_studio_member": is_studio_member,
+            "can_manage_studio": can_manage_studio,
+        })
 
         return context
-
 
 class StudioUpdateView(ProfessionalRequiredMixin,  StudioManagementRequiredMixin, UpdateView):
     model = Studio
@@ -256,6 +291,49 @@ class EmployeeServiceCreateView(
             "studios:studio-detail",
             pk=self.studio.pk,
         )
+
+
+class EmployeeServiceUpdateView(
+    ActiveStudioMembershipRequiredMixin,
+    UpdateView,
+):
+    model = EmployeeService
+    form_class = EmployeeServiceForm
+    template_name = "studios/employee_service_form.html"
+
+    def get_queryset(self):
+        queryset = EmployeeService.objects.filter(
+            membership__studio=self.studio,
+            membership__status=StudioMembership.Status.ACTIVE,
+        ).select_related(
+            "membership",
+            "service",
+        )
+
+        is_manager = self.studio_membership.role in (
+            StudioMembership.Role.OWNER,
+            StudioMembership.Role.MANAGER,
+        )
+
+        if not is_manager:
+            queryset = queryset.filter(
+                membership=self.studio_membership,
+            )
+
+        return queryset
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["studio"] = self.studio
+        kwargs["actor_membership"] = self.studio_membership
+        return kwargs
+
+    def get_success_url(self):
+        return reverse(
+            "studios:studio-detail",
+            kwargs={"pk": self.studio.pk},
+        )
+
 
 class StudioListView(ListView):
     model = Studio

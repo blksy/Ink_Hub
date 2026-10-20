@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import Category, ProfessionalProfile, PortfolioItem, Service
+from studios.models import Studio, StudioMembership
 
 User = get_user_model()
 
@@ -70,13 +71,16 @@ class ProfessionalProfileForm(forms.ModelForm):
         if not is_tattoo_artist:
             self.fields.pop("styles", None)
 
+
 class PortfolioItemForm(forms.ModelForm):
     class Meta:
         model = PortfolioItem
+
         fields = (
             "title",
             "description",
             "image",
+            "studio",
             "service",
             "styles",
             "final_price",
@@ -87,6 +91,7 @@ class PortfolioItemForm(forms.ModelForm):
             "title": "Tytuł",
             "description": "Opis",
             "image": "Zdjęcie",
+            "studio": "Studio, w którym wykonano pracę",
             "service": "Usługa",
             "styles": "Style tatuażu",
             "final_price": "Cena realizacji",
@@ -96,16 +101,47 @@ class PortfolioItemForm(forms.ModelForm):
     def __init__(self, *args, professional=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.professional = professional
+
+        self.fields["studio"].required = False
+        self.fields["studio"].empty_label = "Bez przypisanego studia"
+
         self.fields["service"].empty_label = "Brak powiązanej usługi"
 
         if professional is not None:
-            self.fields["service"].queryset = Service.objects.filter(
-                employee_services__membership__professional=professional,
-            ).distinct()
-        else:
-            self.fields["service"].queryset = (
-                self.fields["service"].queryset.none()
+            active_memberships = StudioMembership.objects.filter(
+                professional=professional,
+                status=StudioMembership.Status.ACTIVE,
             )
+
+            self.fields["studio"].queryset = Studio.objects.filter(
+                memberships__in=active_memberships,
+            ).distinct()
+
+            self.fields["service"].queryset = Service.objects.filter(
+                employee_services__membership__in=active_memberships,
+                employee_services__is_active=True,
+                is_active=True,
+            ).distinct()
+
+        else:
+            self.fields["studio"].queryset = Studio.objects.none()
+            self.fields["service"].queryset = Service.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        studio = cleaned_data.get("studio")
+        service = cleaned_data.get("service")
+
+        if studio and service and service.studio_id != studio.pk:
+            self.add_error(
+                "service",
+                "Wybrana usługa nie należy do wskazanego studia.",
+            )
+
+        return cleaned_data
+
 
 class ServiceForm(forms.ModelForm):
     class Meta:

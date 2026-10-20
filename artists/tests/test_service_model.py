@@ -20,8 +20,6 @@ class ServiceModelTests(TestCase):
 
         self.profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Beauty Studio",
-            location="Poznań",
         )
 
         self.category = Category.objects.create(

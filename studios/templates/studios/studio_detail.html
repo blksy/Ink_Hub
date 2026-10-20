@@ -45,7 +45,7 @@
     {% endif %}
     <hr />
     <h2>Usługi</h2>
-    {% if can_manage_studio or is_studio_member %}
+    {% if is_studio_member %}
       <p>
         <a href="{% url 'studios:employee-service-create' studio_pk=studio.pk %}">Dodaj usługę pracownika</a>
       </p>
@@ -60,17 +60,65 @@
               <p>{{ service.description }}</p>
             {% endif %}
             <p>Cena bazowa: {{ service.price }} zł</p>
-            {% if service.duration_minutes %}
-              <p>
-                Bazowy czas trwania:
-                {{ service.duration_minutes }} min
-              </p>
+            <p>Bazowy czas trwania: {{ service.duration_minutes }} min</p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Studio nie ma jeszcze aktywnych usług w katalogu.</p>
+    {% endif %}
+    <hr />
+    <h2>Cennik pracowników</h2>
+    {% if employee_services %}
+      <ul>
+        {% for employee_service in employee_services %}
+          <li>
+            <h3>{{ employee_service.service.name }}</h3>
+            <p>
+              Pracownik:
+              {{ employee_service.membership.professional.user.email }}
+            </p>
+            <p>Cena: {{ employee_service.price }} zł</p>
+            <p>Czas: {{ employee_service.duration_minutes }} min</p>
+            {% if not employee_service.is_active %}
+              <p>Usługa nieaktywna</p>
+            {% endif %}
+            {% if can_manage_studio or current_membership.pk == employee_service.membership_id %}
+              <a href="{% url 'studios:employee-service-update' studio_pk=studio.pk pk=employee_service.pk %}">Edytuj usługę</a>
             {% endif %}
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p>Studio nie ma jeszcze aktywnych usług.</p>
+      <p>Brak usług przypisanych do pracowników.</p>
+    {% endif %}
+    <hr />
+    <h2>Portfolio studia</h2>
+    {% if portfolio_items %}
+      <ul>
+        {% for item in portfolio_items %}
+          <li>
+            {% if item.image %}
+              <img src="{{ item.image.url }}" alt="{{ item.title }}" width="250" />
+            {% endif %}
+            <h3>{{ item.title|default:"Bez tytułu" }}</h3>
+            {% if item.description %}
+              <p>{{ item.description }}</p>
+            {% endif %}
+            <p>
+              Autor:
+              <a href="{% url 'professionals:professional-detail' item.professional_profile.pk %}">
+                {{ item.professional_profile }}
+              </a>
+            </p>
+            {% if item.service %}
+              <p>Usługa: {{ item.service.name }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Studio nie ma jeszcze opublikowanych realizacji.</p>
     {% endif %}
     <hr />
     <h2>Zespół</h2>

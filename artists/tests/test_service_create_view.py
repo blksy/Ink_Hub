@@ -19,7 +19,6 @@ class ServiceCreateViewTests(TestCase):
 
         self.professional = ProfessionalProfile.objects.create(
             user=self.professional_user,
-            studio_name="Test Studio",
         )
 
         self.studio = Studio.objects.create(

@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
-from artists.models import Category, ProfessionalProfile, Service
+from artists.models import Category, ProfessionalProfile, PortfolioItem, Service
 from studios.models import Studio, StudioMembership
 from users.models import User
 
@@ -150,3 +150,66 @@ class StudioDetailViewTests(TestCase):
             memberships,
         )
 
+    def test_studio_detail_contains_portfolio_items(self):
+        portfolio_item = PortfolioItem.objects.create(
+            professional_profile=self.owner,
+            studio=self.studio,
+            title="Modern haircut",
+            description="Classic barber haircut",
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            portfolio_item,
+            response.context["portfolio_items"],
+        )
+
+    def test_studio_detail_excludes_other_studio_portfolio(self):
+        other_studio = Studio.objects.create(
+            name="Other Studio",
+            location="Warszawa",
+        )
+
+        other_portfolio_item = PortfolioItem.objects.create(
+            professional_profile=self.owner,
+            studio=other_studio,
+            title="Other studio work",
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertNotIn(
+            other_portfolio_item,
+            response.context["portfolio_items"],
+        )
+
+    def test_studio_detail_excludes_personal_portfolio_without_studio(self):
+        personal_portfolio_item = PortfolioItem.objects.create(
+            professional_profile=self.owner,
+            studio=None,
+            title="Personal work",
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertNotIn(
+            personal_portfolio_item,
+            response.context["portfolio_items"],
+        )
+
+    def test_studio_portfolio_is_visible_to_anonymous_users(self):
+        portfolio_item = PortfolioItem.objects.create(
+            professional_profile=self.owner,
+            studio=self.studio,
+            title="Barber portfolio",
+        )
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            portfolio_item,
+            response.context["portfolio_items"],
+        )

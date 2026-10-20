@@ -46,21 +46,7 @@ class ProfessionalProfile(models.Model):
         related_name="professional_profile",
     )
 
-    # Temporary legacy field.
-    # It will be removed after studio data is fully migrated to Studio.
-    studio_name = models.CharField(
-        max_length=150,
-        blank=True,
-    )
-
     bio = models.TextField(
-        blank=True,
-    )
-
-    # Temporary legacy field.
-    # Studio location will ultimately belong to Studio.
-    location = models.CharField(
-        max_length=150,
         blank=True,
     )
 
@@ -70,8 +56,6 @@ class ProfessionalProfile(models.Model):
         null=True,
     )
 
-    # Temporary legacy relation.
-    # Categories will ultimately describe the studio/service offering.
     categories = models.ManyToManyField(
         Category,
         related_name="professionals",
@@ -101,6 +85,14 @@ class ProfessionalProfile(models.Model):
 
 
 class PortfolioItem(models.Model):
+    studio = models.ForeignKey(
+        "studios.Studio",
+        on_delete=models.SET_NULL,
+        related_name="portfolio_items",
+        blank=True,
+        null=True,
+    )
+
     professional_profile = models.ForeignKey(
         ProfessionalProfile,
         on_delete=models.CASCADE,

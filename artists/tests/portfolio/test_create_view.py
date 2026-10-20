@@ -23,7 +23,6 @@ class PortfolioItemCreateViewTests(TestCase):
 
         self.professional = ProfessionalProfile.objects.create(
             user=self.professional_user,
-            studio_name="Portfolio Studio",
         )
 
         self.client_user = User.objects.create_user(

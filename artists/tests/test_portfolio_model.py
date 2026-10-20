@@ -25,7 +25,6 @@ class PortfolioItemModelTests(TestCase):
 
         self.profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Ink House",
         )
 
         self.category = Category.objects.create(

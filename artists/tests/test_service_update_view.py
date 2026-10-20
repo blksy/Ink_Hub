@@ -64,7 +64,6 @@ class ServiceUpdateViewTests(TestCase):
 
         self.other_professional = ProfessionalProfile.objects.create(
             user=self.other_user,
-            studio_name="Other Studio",
         )
 
         self.url = reverse(

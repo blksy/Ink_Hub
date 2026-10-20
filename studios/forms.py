@@ -103,13 +103,13 @@ class EmployeeServiceForm(forms.ModelForm):
             "service",
             "price",
             "duration_minutes",
+            "is_active",
         )
 
-    def __init__(self, *args, **kwargs):
-        studio = kwargs.pop("studio")
-        actor_membership = kwargs.pop("actor_membership")
-
+    def __init__(self, *args,  studio, actor_membership, **kwargs):
         super().__init__(*args, **kwargs)
+
+        is_update = self.instance.pk is not None
 
         self.fields["service"].queryset = studio.services.filter(
             is_active=True,
@@ -120,12 +120,17 @@ class EmployeeServiceForm(forms.ModelForm):
             StudioMembership.Role.MANAGER,
         )
 
-        if is_manager:
+        if is_update:
+            self.fields.pop("membership")
+            self.fields.pop("service")
+
+        elif is_manager:
             self.fields["membership"].queryset = (
                 studio.memberships.filter(
                     status=StudioMembership.Status.ACTIVE,
                 )
             )
             self.fields["membership"].required = True
+
         else:
-            del self.fields["membership"]
+            self.fields.pop("membership")
