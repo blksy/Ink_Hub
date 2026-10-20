@@ -1,10 +1,9 @@
-from decimal import Decimal
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from artists.forms import ServiceForm
-from artists.models import Category, ProfessionalProfile
+from artists.models import Category
+from studios.models import Studio
 
 
 User = get_user_model()
@@ -18,9 +17,9 @@ class ServiceFormTests(TestCase):
             role=User.Role.PROFESSIONAL,
         )
 
-        self.profile = ProfessionalProfile.objects.create(
-            user=self.user,
-            studio_name="Dark Ink Studio",
+        self.studio = Studio.objects.create(
+            name="Dark Ink Studio",
+            location="Poznań",
         )
 
         self.tattoo = Category.objects.create(
@@ -38,13 +37,13 @@ class ServiceFormTests(TestCase):
             slug="nails",
         )
 
-        self.profile.categories.add(
+        self.studio.categories.add(
             self.tattoo,
             self.piercing,
         )
 
     def test_form_contains_expected_fields(self):
-        form = ServiceForm(professional=self.profile)
+        form = ServiceForm(studio=self.studio)
 
         self.assertEqual(
             set(form.fields.keys()),
@@ -58,8 +57,8 @@ class ServiceFormTests(TestCase):
             },
     )
 
-    def test_form_only_displays_professional_categories(self):
-        form = ServiceForm(professional=self.profile)
+    def test_form_only_displays_studio_categories(self):
+        form = ServiceForm(studio=self.studio)
 
         categories = form.fields["category"].queryset
 
@@ -77,12 +76,16 @@ class ServiceFormTests(TestCase):
                 "duration_minutes": "60",
                 "is_active": True,
             },
-            professional=self.profile,
+            studio=self.studio,
     )
 
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_form_rejects_category_not_assigned_to_professional(self):
+        service = form.save()
+
+        self.assertEqual(service.studio, self.studio)
+
+    def test_form_rejects_category_not_assigned_to_studio(self):
         form = ServiceForm(
             data={
                 "category": self.nails.pk,
@@ -91,13 +94,13 @@ class ServiceFormTests(TestCase):
                 "duration_minutes": "60",
                 "is_active": True,
             },
-            professional=self.profile,
+            studio=self.studio,
     )
 
         self.assertFalse(form.is_valid())
         self.assertIn("category", form.errors)
 
-    def test_form_has_no_categories_without_professional(self):
+    def test_form_has_no_categories_without_studio(self):
         form = ServiceForm()
 
         self.assertFalse(

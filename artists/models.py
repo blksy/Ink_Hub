@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 
+
 class TattooStyle(models.Model):
     name = models.CharField(
         max_length=100,
@@ -20,8 +21,15 @@ class TattooStyle(models.Model):
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=120, unique=True)
+    name = models.CharField(
+        max_length=100, 
+        unique=True
+    )
+
+    slug = models.SlugField(
+        max_length=120, 
+        unique=True
+    )
 
     class Meta:
         verbose_name_plural = "categories"
@@ -37,17 +45,8 @@ class ProfessionalProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="professional_profile",
     )
-    studio_name = models.CharField(
-        max_length=150,
-        blank=True,
-    )
 
     bio = models.TextField(
-        blank=True,
-    )
-
-    location = models.CharField(
-        max_length=150,
         blank=True,
     )
 
@@ -80,15 +79,26 @@ class ProfessionalProfile(models.Model):
         return super().save(*args, **kwargs)
     
     def __str__(self):
-        return self.studio_name or self.user.email
+        full_name = self.user.get_full_name()
+
+        return full_name or self.user.email
 
 
 class PortfolioItem(models.Model):
+    studio = models.ForeignKey(
+        "studios.Studio",
+        on_delete=models.SET_NULL,
+        related_name="portfolio_items",
+        blank=True,
+        null=True,
+    )
+
     professional_profile = models.ForeignKey(
         ProfessionalProfile,
         on_delete=models.CASCADE,
         related_name="portfolio",
     )
+
     service = models.ForeignKey(
         "Service",
         on_delete=models.SET_NULL,
@@ -136,28 +146,13 @@ class PortfolioItem(models.Model):
         auto_now_add=True,
     )
 
-    def clean(self):
-        if (
-            self.service_id
-            and self.professional_profile_id
-            and self.service.professional_id != self.professional_profile_id
-        ):
-            raise ValidationError(
-                {
-                    "service": (
-                        "Portfolio item can only use a service "
-                        "belonging to the same professional."
-                    )
-                }
-            )
-
     def __str__(self):
         return self.title or f"Portfolio item #{self.pk}"
 
 
 class Service(models.Model):
-    professional = models.ForeignKey(
-        ProfessionalProfile,
+    studio = models.ForeignKey(
+        "studios.Studio",
         on_delete=models.CASCADE,
         related_name="services",
     )
@@ -168,8 +163,13 @@ class Service(models.Model):
         related_name="services",
     )
 
-    name = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
+    name = models.CharField(
+        max_length=150
+    )
+
+    description = models.TextField(
+        blank=True
+    )
 
     price = models.DecimalField(
         max_digits=10,
@@ -187,16 +187,23 @@ class Service(models.Model):
         ],
     )
 
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(
+        default=True
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
 
     def clean(self):
         if (
-            self.professional_id
+            self.studio_id
             and self.category_id
-            and not self.professional.categories.filter(
+            and not self.studio.categories.filter(
                 pk=self.category_id
             ).exists()
         ):
@@ -204,7 +211,7 @@ class Service(models.Model):
                 {
                     "category": (
                         "Service category must be assigned "
-                        "to the professional profile."
+                        "to the studio."
                     )
                 }
             )

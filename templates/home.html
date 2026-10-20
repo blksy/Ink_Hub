@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InkHub | Strona główna</title>
+  </head>
+  <body>
+    <header>
+      <h1>InkHub</h1>
+      <nav>
+        <a href="{% url 'home' %}">Strona główna</a>
+        <a href="{% url 'studios:studio-list' %}">Studia</a>
+        <a href="{% url 'professionals:professional-list' %}">Specjaliści</a>
+        {% if user.is_authenticated %}
+          {% if user.role == "PROFESSIONAL" %}
+            <a href="{% url 'professionals:professional-detail' user.professional_profile.pk %}">Moje konto</a>
+            <a href="{% url 'studios:my-invitations' %}">Moje zaproszenia</a>
+          {% endif %}
+          <form method="post" action="{% url 'users:logout' %}">
+            {% csrf_token %}
+            <button type="submit">Wyloguj się</button>
+          </form>
+        {% else %}
+          <a href="{% url 'users:login' %}">Zaloguj się</a>
+          <a href="{% url 'users:register' %}">Zarejestruj się</a>
+        {% endif %}
+      </nav>
+    </header>
+    <main>
+      <section>
+        <h2>Odkryj najlepszych specjalistów i studia</h2>
+        <p>
+          Znajdź odpowiedniego profesjonalistę, poznaj jego portfolio
+          i sprawdź dostępne usługi.
+        </p>
+        <p>
+          Wkrótce znajdziesz tutaj wyszukiwarkę studiów,
+          specjalistów i usług.
+        </p>
+      </section>
+      <section>
+        <h2>Co chcesz znaleźć?</h2>
+        <article>
+          <h3>Studia</h3>
+          <p>Przeglądaj salony, lokalizacje i oferowane usługi.</p>
+          <a href="{% url 'studios:studio-list' %}">Zobacz studia</a>
+        </article>
+        <article>
+          <h3>Specjaliści</h3>
+          <p>Odkrywaj profesjonalistów i ich portfolio.</p>
+          <a href="{% url 'home' %}">Zobacz specjalistów</a>
+        </article>
+      </section>
+    </main>
+    <footer>
+      <p>Artiva — Discover. Book. Create.</p>
+    </footer>
+  </body>
+</html>

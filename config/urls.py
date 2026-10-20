@@ -19,11 +19,15 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
+from config.views import HomeView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("professionals/", include("artists.urls")),
     path("", include("users.urls")),
+    path("studios/",include("studios.urls")),
+    path("", HomeView.as_view(), name="home"),
 ]
 
 if settings.DEBUG:

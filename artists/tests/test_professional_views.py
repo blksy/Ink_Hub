@@ -18,8 +18,6 @@ class ProfessionalViewTests(TestCase):
 
         self.profile = ProfessionalProfile.objects.create(
             user=self.user,
-            studio_name="Black Clover Tattoo",
-            location="Poznań",
             bio="Tattoo artist from Poznań.",
         )
 
@@ -45,9 +43,16 @@ class ProfessionalViewTests(TestCase):
             reverse("professionals:professional-list")
         )
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
-            "Black Clover Tattoo",
+            self.user.email,
+        )
+
+        self.assertContains(
+            response,
+            self.profile.bio,
         )
 
     def test_professional_detail_view_returns_200(self):
@@ -129,7 +134,6 @@ class ProfessionalViewTests(TestCase):
 
         ProfessionalProfile.objects.create(
             user=other_user,
-            studio_name="Other Studio",
         )
         self.client.force_login(other_user)
 
@@ -259,7 +263,6 @@ class ProfessionalViewTests(TestCase):
 
         ProfessionalProfile.objects.create(
             user=other_user,
-            studio_name="Other Studio",
         )
 
         self.client.force_login(other_user)
@@ -283,6 +286,13 @@ class ProfessionalViewTests(TestCase):
         self.assertNotContains(response, "Style tatuażu")
 
     def test_professional_list_displays_tattoo_styles_when_assigned(self):
+        tattoo_category = Category.objects.create(
+            name="Tatuaż",
+            slug="tatuaz",
+        )
+
+        self.profile.categories.add(tattoo_category)
+
         style = TattooStyle.objects.create(
             name="Blackwork",
             slug="blackwork",

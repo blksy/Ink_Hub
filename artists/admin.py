@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from studios.models import StudioMembership
+
 from .models import ProfessionalProfile, PortfolioItem, TattooStyle, Category, Service
 
 
@@ -7,17 +9,19 @@ from .models import ProfessionalProfile, PortfolioItem, TattooStyle, Category, S
 class ProfessionalProfileAdmin(admin.ModelAdmin):
     list_display = (
         "user",
-        "studio_name",
-        "location",
+        "get_studios",
     )
 
-    search_fields = (
-        "user__email",
-        "studio_name",
-        "location",
-    )
+    list_select_related = ("user",)
 
-    filter_horizontal = ("styles",)
+    @admin.display(description="Studia")
+    def get_studios(self, obj):
+        return ", ".join(
+            membership.studio.name
+            for membership in obj.studio_memberships.filter(
+                status=StudioMembership.Status.ACTIVE
+            ).select_related("studio")
+        ) or "Brak studia"
 
 
 @admin.register(TattooStyle)
@@ -67,7 +71,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ServiceAdmin(admin.ModelAdmin):
     list_display = (
         "name",
-        "professional",
+        "studio",
         "category",
         "price",
         "duration_minutes",
@@ -81,5 +85,5 @@ class ServiceAdmin(admin.ModelAdmin):
 
     search_fields = (
         "name",
-        "professional__studio_name",
+        "studio__name",
     )

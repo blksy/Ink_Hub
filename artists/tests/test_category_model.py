@@ -28,7 +28,6 @@ class CategoryModelTests(TestCase):
 
         professional = ProfessionalProfile.objects.create(
             user=user,
-            studio_name="Dark Ink Studio",
         )
 
         tattoo = Category.objects.create(

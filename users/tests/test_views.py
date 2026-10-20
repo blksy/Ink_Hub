@@ -106,7 +106,7 @@ class AuthenticationViewTests(TestCase):
 
         self.assertRedirects(
             response,
-            reverse("professionals:professional-list"),
+            reverse("home"),
         )
 
         self.assertTrue(

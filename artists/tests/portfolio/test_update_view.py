@@ -21,7 +21,6 @@ class PortfolioItemUpdateViewTests(TestCase):
 
         self.professional = ProfessionalProfile.objects.create(
             user=self.professional_user,
-            studio_name="Update Studio",
         )
 
         image = SimpleUploadedFile(
@@ -112,7 +111,6 @@ class PortfolioItemUpdateViewTests(TestCase):
 
         other_professional = ProfessionalProfile.objects.create(
             user=other_user,
-            studio_name="Other Studio",
         )
 
         other_item = PortfolioItem.objects.create(

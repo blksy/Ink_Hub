@@ -1,26 +1,41 @@
 from django import forms
+from django.contrib.auth import get_user_model
+from .models import Category, ProfessionalProfile, PortfolioItem, Service
+from studios.models import Studio, StudioMembership
 
-from .models import ProfessionalProfile, PortfolioItem, Service
+User = get_user_model()
+
+
+class UserPersonalDataForm(forms.ModelForm):
+    class Meta:
+        model = User
+
+        fields = (
+            "first_name",
+            "last_name",
+        )
+
+        labels = {
+            "first_name": "Imię",
+            "last_name": "Nazwisko",
+        }
 
 
 class ProfessionalProfileForm(forms.ModelForm):
     class Meta:
         model = ProfessionalProfile
+
         fields = (
-            "studio_name",
             "bio",
-            "location",
             "profile_image",
             "categories",
             "styles",
         )
 
         labels = {
-            "studio_name": "Nazwa studia / salonu",
-            "bio": "Opis",
-            "location": "Lokalizacja",
-            "profile_image": "Zdjęcie profilowe / logo",
-            "categories": "Kategorie usług",
+            "bio": "O mnie",
+            "profile_image": "Zdjęcie profilowe",
+            "categories": "Specjalizacje",
             "styles": "Style tatuażu",
         }
 
@@ -29,39 +44,43 @@ class ProfessionalProfileForm(forms.ModelForm):
             "styles": forms.CheckboxSelectMultiple(),
         }
 
-    def clean_categories(self):
-        categories = self.cleaned_data["categories"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        if self.instance.pk:
-            used_category_ids = set(
-                self.instance.services.values_list(
-                   "category_id",
-                    flat=True,
-                )
-            )
+        is_tattoo_artist = False
 
-            selected_category_ids = set(
-                categories.values_list(
-                    "id",
-                    flat=True,
-                )
-            )
-    
-            if not used_category_ids.issubset(selected_category_ids):
-                raise forms.ValidationError(
-                     "Nie można usunąć kategorii używanej przez istniejące usługi."
-                )
+        if self.is_bound:
+            if hasattr(self.data, "getlist"):
+                selected_categories = self.data.getlist("categories")
+            else:
+                selected_categories = self.data.get("categories", [])
 
-        return categories
+                if not isinstance(selected_categories, (list, tuple)):
+                    selected_categories = [selected_categories]
+
+            is_tattoo_artist = Category.objects.filter(
+                pk__in=selected_categories,
+                slug="tatuaz",
+            ).exists()
+
+        elif self.instance.pk:
+            is_tattoo_artist = self.instance.categories.filter(
+                slug="tatuaz",
+            ).exists()
+
+        if not is_tattoo_artist:
+            self.fields.pop("styles", None)
 
 
 class PortfolioItemForm(forms.ModelForm):
     class Meta:
         model = PortfolioItem
+
         fields = (
             "title",
             "description",
             "image",
+            "studio",
             "service",
             "styles",
             "final_price",
@@ -72,6 +91,7 @@ class PortfolioItemForm(forms.ModelForm):
             "title": "Tytuł",
             "description": "Opis",
             "image": "Zdjęcie",
+            "studio": "Studio, w którym wykonano pracę",
             "service": "Usługa",
             "styles": "Style tatuażu",
             "final_price": "Cena realizacji",
@@ -81,14 +101,47 @@ class PortfolioItemForm(forms.ModelForm):
     def __init__(self, *args, professional=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.professional = professional
+
+        self.fields["studio"].required = False
+        self.fields["studio"].empty_label = "Bez przypisanego studia"
+
         self.fields["service"].empty_label = "Brak powiązanej usługi"
 
         if professional is not None:
-            self.fields["service"].queryset = professional.services.all()
-        else:
-            self.fields["service"].queryset = (
-                self.fields["service"].queryset.none()
+            active_memberships = StudioMembership.objects.filter(
+                professional=professional,
+                status=StudioMembership.Status.ACTIVE,
             )
+
+            self.fields["studio"].queryset = Studio.objects.filter(
+                memberships__in=active_memberships,
+            ).distinct()
+
+            self.fields["service"].queryset = Service.objects.filter(
+                employee_services__membership__in=active_memberships,
+                employee_services__is_active=True,
+                is_active=True,
+            ).distinct()
+
+        else:
+            self.fields["studio"].queryset = Studio.objects.none()
+            self.fields["service"].queryset = Service.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        studio = cleaned_data.get("studio")
+        service = cleaned_data.get("service")
+
+        if studio and service and service.studio_id != studio.pk:
+            self.add_error(
+                "service",
+                "Wybrana usługa nie należy do wskazanego studia.",
+            )
+
+        return cleaned_data
+
 
 class ServiceForm(forms.ModelForm):
     class Meta:
@@ -111,13 +164,14 @@ class ServiceForm(forms.ModelForm):
             "is_active": "Usługa aktywna",
         }
 
-    def __init__(self, *args, professional=None, **kwargs):
+    def __init__(self, *args, studio=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["category"].empty_label = "Wybierz kategorię"
 
-        if professional is not None:
-            self.fields["category"].queryset = professional.categories.all()
+        if studio is not None:
+            self.instance.studio = studio
+            self.fields["category"].queryset = studio.categories.all()
         else:
             self.fields["category"].queryset = (
                 self.fields["category"].queryset.none()

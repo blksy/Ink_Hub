@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Studia — Artiva</title>
+  </head>
+  <body>
+    <h1>Studia Artiva</h1>
+    {% if user.is_authenticated %}
+      <a href="{% url 'studios:studio-create' %}">Utwórz studio</a>
+    {% endif %}
+    {% for studio in studios %}
+      <article>
+        <h2>
+          <a href="{% url 'studios:studio-detail' pk=studio.pk %}">{{ studio.name }}</a>
+        </h2>
+        <p>{{ studio.location }}</p>
+      </article>
+    {% empty %}
+      <p>Nie znaleziono studiów.</p>
+    {% endfor %}
+    <p>
+      <a href="{% url 'home' %}">← Powrót do strony głównej</a>
+    </p>
+  </body>
+</html>
