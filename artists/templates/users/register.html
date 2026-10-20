@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rejestracja | InkHub</title>
+  </head>
+  <body>
+    <h1>Utwórz konto</h1>
+
+    <form method="post">
+      {% csrf_token %} {{ form.as_p }}
+
+      <button type="submit">Zarejestruj się</button>
+    </form>
+
+    <p>
+      Masz już konto?
+      <a href="{% url 'users:login' %}">Zaloguj się</a>
+    </p>
+  </body>
+</html>

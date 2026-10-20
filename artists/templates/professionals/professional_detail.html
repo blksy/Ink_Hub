@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{ professional.user.get_full_name|default:professional.user.email }} | InkHub</title>
+  </head>
+  <body>
+    <h1>{{ professional.user.get_full_name|default:professional.user.email }}</h1>
+    {% if professional.profile_image %}
+      <img src="{{ professional.profile_image.url }}"
+           alt="{{ professional.user.get_full_name|default:professional.user.email }}"
+           width="200" />
+    {% endif %}
+    <section>
+      <h2>Dane osobowe</h2>
+      <p>Imię: {{ professional.user.first_name }}</p>
+      <p>Nazwisko: {{ professional.user.last_name }}</p>
+      {% if is_profile_owner %}
+        <p>E-mail: {{ professional.user.email }}</p>
+      {% endif %}
+    </section>
+    {% if user.is_authenticated and user == professional.user %}
+      <p>
+        <a href="{% url 'professionals:professional-profile-edit' %}">Edytuj profil</a>
+      </p>
+    {% endif %}
+    <h2>O mnie</h2>
+    {% if professional.bio %}
+      <p>{{ professional.bio }}</p>
+    {% else %}
+      <p>Specjalista nie dodał jeszcze opisu.</p>
+    {% endif %}
+    {% if professional.categories.exists %}
+      <section>
+        <h2>Specjalizacje</h2>
+        <ul>
+          {% for category in professional.categories.all %}
+            <li>{{ category.name }}</li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+    <hr />
+    {% if professional.categories.exists %}
+      <h2>Moje specjalizacje</h2>
+      <ul>
+        {% for category in professional.categories.all %}
+          <li>{{ category.name }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <h2>Miejsca pracy</h2>
+    {% for membership in memberships %}
+      <article>
+        <h3>
+          <a href="{% url 'studios:studio-detail' membership.studio.pk %}">{{ membership.studio.name }}</a>
+        </h3>
+        {% if membership.studio.location %}
+          <p>Lokalizacja: {{ membership.studio.location }}</p>
+        {% endif %}
+        <p>Rola: {{ membership.get_role_display }}</p>
+        {% if membership.studio.categories.exists %}
+          <p>Kategorie usług:</p>
+          <ul>
+            {% for category in membership.studio.categories.all %}
+              <li>{{ category.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if professional.styles.exists %}
+          <h3>Style tatuażu</h3>
+          <ul>
+            {% for style in professional.styles.all %}
+              <li>{{ style.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </article>
+    {% empty %}
+      <p>Specjalista nie pracuje obecnie w żadnym studiu.</p>
+    {% endfor %}
+    {% if professional.styles.exists %}
+      <h2>Style tatuażu</h2>
+      <ul>
+        {% for style in professional.styles.all %}
+          <li>{{ style.name }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    <hr />
+    <h2>Cennik</h2>
+    {% if employee_services %}
+      <ul>
+        {% for employee_service in employee_services %}
+          <li>
+            <h3>{{ employee_service.service.name }}</h3>
+            <p>Studio: {{ employee_service.membership.studio.name }}</p>
+            <p>Kategoria: {{ employee_service.service.category.name }}</p>
+            {% if employee_service.service.description %}
+              <p>{{ employee_service.service.description }}</p>
+            {% endif %}
+            <p>Cena: {{ employee_service.price }} zł</p>
+            <p>
+              Czas trwania:
+              {{ employee_service.duration_minutes }} min
+            </p>
+            {% if not employee_service.is_active %}
+              <p>
+                <strong>Usługa nieaktywna dla tego pracownika</strong>
+              </p>
+            {% endif %}
+            {% if not employee_service.service.is_active %}
+              <p>
+                <strong>Usługa nieaktywna w studio</strong>
+              </p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak usług w cenniku.</p>
+    {% endif %}
+    <hr />
+    <h2>Portfolio</h2>
+    {% if user.is_authenticated and user == professional.user %}
+      <p>
+        <a href="{% url 'professionals:portfolio-item-create' %}">Dodaj pracę</a>
+      </p>
+    {% endif %}
+    {% if professional.portfolio.exists %}
+      {% for item in professional.portfolio.all %}
+        <div>
+          {% if item.image %}
+            <img src="{{ item.image.url }}" alt="{{ item.title }}" width="300" />
+          {% endif %}
+          <h3>{{ item.title }}</h3>
+          {% if item.service %}
+            <p>Usługa: {{ item.service.name }}</p>
+          {% endif %}
+          {% if item.description %}
+            <p>{{ item.description }}</p>
+          {% endif %}
+          {% if item.styles.exists %}
+            <p>
+              Style tatuażu:
+              {% for style in item.styles.all %}
+                {{ style.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+          {% endif %}
+          {% if item.final_price %}
+            <p>Cena realizacji: {{ item.final_price }} zł</p>
+          {% endif %}
+          {% if item.sessions_count %}
+            <p>Liczba sesji: {{ item.sessions_count }}</p>
+          {% endif %}
+          {% if user.is_authenticated and user == professional.user %}
+            <p>
+              <a href="{% url 'professionals:portfolio-item-update' item.pk %}">Edytuj</a>
+              <a href="{% url 'professionals:portfolio-item-delete' item.pk %}">Usuń</a>
+            </p>
+          {% endif %}
+        </div>
+        <hr />
+      {% endfor %}
+    {% else %}
+      <p>Specjalista nie dodał jeszcze żadnych prac.</p>
+    {% endif %}
+    <p>
+      <a href="{% url 'home' %}">← Powrót do strony głównej</a>
+    </p>
+  </body>
+</html>

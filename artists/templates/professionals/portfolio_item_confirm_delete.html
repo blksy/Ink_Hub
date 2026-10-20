@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Usuń pracę | InkHub</title>
+  </head>
+
+  <body>
+    <h1>Usuń pracę</h1>
+
+    <p>Czy na pewno chcesz usunąć "{{ object.title }}"?</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Usuń</button>
+    </form>
+  </body>
+</html>

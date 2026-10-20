@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Specjaliści | InkHub</title>
+  </head>
+  <body>
+    <h1>Artyści</h1>
+    <form method="post" action="{% url 'users:logout' %}">
+      {% csrf_token %}
+      <button type="submit">Wyloguj się</button>
+    </form>
+    {% for professional in professionals %}
+      <article>
+        {% if professional.profile_image %}
+          <img src="{{ professional.profile_image.url }}"
+               alt="{{ professional.user.get_full_name|default:professional.user.email }}"
+               width="150" />
+        {% endif %}
+        <h2>
+          <a href="{% url 'professionals:professional-detail' professional.pk %}">
+            {{ professional.user.get_full_name|default:professional.user.email }}
+          </a>
+        </h2>
+        {% if professional.bio %}
+          <p>{{ professional.bio|truncatewords:20 }}</p>
+        {% endif %}
+        {% if professional.categories.exists %}
+          <h3>Specjalizacje</h3>
+          <ul>
+            {% for category in professional.categories.all %}
+              <li>{{ category.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if professional.styles.exists %}
+          <h3>Style tatuażu</h3>
+          <ul>
+            {% for style in professional.styles.all %}
+              <li>{{ style.name }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        <h3>Miejsca pracy</h3>
+        <ul>
+          {% for membership in professional.active_memberships %}
+            <li>
+              <a href="{% url 'studios:studio-detail' membership.studio.pk %}">{{ membership.studio.name }}</a>
+            </li>
+          {% empty %}
+            <li>Brak aktywnych miejsc pracy.</li>
+          {% endfor %}
+        </ul>
+      </article>
+    {% empty %}
+      <p>Nie znaleziono specjalistów.</p>
+    {% endfor %}
+    <p>
+      <a href="{% url 'home' %}">← Powrót do strony głównej</a>
+    </p>
+  </body>
+</html>
