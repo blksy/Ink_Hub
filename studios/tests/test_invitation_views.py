@@ -126,3 +126,41 @@ class StudioInvitationCreateViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(StudioInvitation.objects.count(), 1)
+
+    def test_employee_cannot_create_invitation(self):
+        self.membership.role = StudioMembership.Role.EMPLOYEE
+        self.membership.save()
+
+        response = self.client.post(self.url, {
+            "email": "employee@example.com",
+            "role": StudioMembership.Role.EMPLOYEE,
+        })
+
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(StudioInvitation.objects.exists())
+
+    def test_manager_can_create_invitation(self):
+        self.membership.role = StudioMembership.Role.MANAGER
+        self.membership.save()
+
+        response = self.client.post(self.url, {
+            "email": "employee@example.com",
+            "role": StudioMembership.Role.EMPLOYEE,
+        })
+
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            StudioInvitation.objects.filter(
+                studio=self.studio,
+                email="employee@example.com",
+            ).exists()
+        )
+
+    def test_cannot_invite_existing_active_member(self):
+        response = self.client.post(self.url, {
+            "email": self.owner_user.email,
+            "role": StudioMembership.Role.EMPLOYEE,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(StudioInvitation.objects.exists())
