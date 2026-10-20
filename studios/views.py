@@ -1,4 +1,5 @@
 from django.db import models, transaction
+from django.http import HttpResponseForbidden
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
@@ -379,7 +380,10 @@ class StudioInvitationAcceptView(
         if invitation.is_expired():
             invitation.status = StudioInvitation.Status.EXPIRED
             invitation.save(update_fields=["status"])
-            raise PermissionDenied("Zaproszenie wygasło.")
+
+            return HttpResponseForbidden(
+                "Zaproszenie wygasło."
+            )
 
         if invitation.role == StudioMembership.Role.OWNER:
             raise PermissionDenied(

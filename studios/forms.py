@@ -37,6 +37,12 @@ class StudioInvitationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.studio = studio
 
+        self.fields["role"].choices = [
+           (role, label)
+           for role, label in StudioMembership.Role.choices
+           if role != StudioMembership.Role.OWNER
+        ]
+
     def clean_email(self):
         email = self.cleaned_data["email"]
 
