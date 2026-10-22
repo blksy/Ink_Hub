@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "users",
     "artists",
     "studios",
+    "clients",
 ]
 
 MIDDLEWARE = [
