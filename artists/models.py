@@ -50,6 +50,11 @@ class ProfessionalProfile(models.Model):
         blank=True,
     )
 
+    phone_number = models.CharField(
+        max_length=20,
+        blank=True,
+    )
+
     profile_image = models.ImageField(
         upload_to="professionals/profile_images/",
         blank=True,
@@ -67,13 +72,7 @@ class ProfessionalProfile(models.Model):
         related_name="professionals",
         blank=True,
     )
-
-    def clean(self):
-        if self.user.role != self.user.Role.PROFESSIONAL:
-            raise ValidationError(
-                "Professional profile can only be created for users with PROFESSIONAL role."
-            )
-
+    
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)

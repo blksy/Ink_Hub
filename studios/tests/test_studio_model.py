@@ -146,3 +146,14 @@ class StudioModelTests(TestCase):
             category,
             studio.categories.all(),
         )
+
+    def test_studio_phone_number(self):
+        studio = Studio.objects.create(
+            name="Gentlemen Barber Poznań",
+            location="Poznań",
+            phone_number="+48123456789",
+        )
+
+        studio_from_db = Studio.objects.get(pk=studio.pk)
+
+        self.assertEqual( studio_from_db.phone_number, "+48123456789",)

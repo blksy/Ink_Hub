@@ -55,7 +55,6 @@ class ServiceUpdateViewTests(TestCase):
             role=User.Role.CLIENT,
         )
 
-        # Drugi profesjonalista
         self.other_user = User.objects.create_user(
             email="other@example.com",
             password="testpass123",

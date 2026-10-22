@@ -28,6 +28,7 @@ urlpatterns = [
     path("", include("users.urls")),
     path("studios/",include("studios.urls")),
     path("", HomeView.as_view(), name="home"),
+    path("clients/", include("clients.urls")),
 ]
 
 if settings.DEBUG:

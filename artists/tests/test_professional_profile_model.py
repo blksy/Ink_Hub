@@ -4,6 +4,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from artists.models import ProfessionalProfile, TattooStyle
+from clients.models import ClientProfile
 
 
 User = get_user_model()
@@ -61,17 +62,19 @@ class ProfessionalProfileModelTests(TestCase):
 
         self.assertEqual(str(profile), self.user.email)
 
-    def test_client_cannot_have_professional_profile(self):
+    def test_client_is_allowed_to_have_professional_profile(self):
         client = User.objects.create_user(
             email="client@example.com",
             password="testpass123",
             role=User.Role.CLIENT,
         )
 
-        with self.assertRaises(ValidationError):
-            ProfessionalProfile.objects.create(
-                user=client,
-        )
+        professional = ProfessionalProfile.objects.create(user = client)
+        client.refresh_from_db()
+
+        self.assertEqual(client.role, User.Role.CLIENT)
+
+        self.assertEqual(professional.user, client)
 
     def test_professional_can_have_multiple_styles(self):
         profile = ProfessionalProfile.objects.create(
@@ -97,11 +100,11 @@ class ProfessionalProfileModelTests(TestCase):
 
         first_profile = ProfessionalProfile.objects.create(
             user=self.user,
-    )
+        )
 
         second_profile = ProfessionalProfile.objects.create(
             user=second_user,
-    )
+        )
 
         blackwork = TattooStyle.objects.create(name="Blackwork", slug="blackwork",)
 
@@ -123,12 +126,48 @@ class ProfessionalProfileModelTests(TestCase):
         style = TattooStyle.objects.create(
             name="Fine Line",
             slug="fine-line",
-    )
+        )
 
         self.assertEqual(style.name, "Fine Line")
         self.assertEqual(style.slug, "fine-line")
         self.assertEqual(str(style), "Fine Line")
 
+    def test_professional_profile_without_phone_number(self):
+        professional  = ProfessionalProfile.objects.create(
+            user=self.user
+        )
 
+        self.assertEqual(professional.phone_number, "")
 
-    
+    def test_user_can_have_both_profiles(self):
+        professional_profile = ProfessionalProfile.objects.create(
+            user=self.user,
+        )
+
+        client_profile = ClientProfile.objects.create(
+            user=self.user
+        )
+
+        self.assertEqual(self.user.client_profile, client_profile)
+        self.assertEqual(self.user.professional_profile, professional_profile)
+        self.assertEqual(self.user.role, User.Role.PROFESSIONAL)
+
+    def test_deleting_client_profile_preserves_professional_profile(self):
+        user = self.user
+
+        client_profile = ClientProfile.objects.create(
+            user=self.user
+        )
+
+        professional_profile = ProfessionalProfile.objects.create(
+            user=self.user
+        )
+
+        client_profile_id = client_profile.pk
+        professional_profile_id =  professional_profile.pk
+
+        client_profile.delete()
+
+        self.assertTrue(ProfessionalProfile.objects.filter(pk=professional_profile_id).exists())
+        self.assertFalse(ClientProfile.objects.filter(pk=client_profile_id).exists())
+        self.assertTrue(User.objects.filter(pk=user.pk).exists())
