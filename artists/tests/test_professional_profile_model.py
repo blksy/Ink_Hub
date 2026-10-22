@@ -129,6 +129,10 @@ class ProfessionalProfileModelTests(TestCase):
         self.assertEqual(style.slug, "fine-line")
         self.assertEqual(str(style), "Fine Line")
 
+    def test_professional_profile_without_phone_number(self):
+        professional  = ProfessionalProfile.objects.create(
+            user=self.user
+        )
 
-
-    
+        self.assertEqual(professional.phone_number, "")
+ 
