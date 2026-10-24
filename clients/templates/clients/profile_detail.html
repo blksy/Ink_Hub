@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8">
+    <title>Mój profil | Artiva</title>
+  </head>
+  <body>
+    <h1>Mój profil klienta</h1>
+    <p>
+      <strong>Imię:</strong>
+      {{ client_profile.user.first_name|default:"Nie podano" }}
+    </p>
+    <p>
+      <strong>Nazwisko:</strong>
+      {{ client_profile.user.last_name|default:"Nie podano" }}
+    </p>
+    <p>
+      <strong>Telefon:</strong>
+      {{ client_profile.phone_number|default:"Nie podano" }}
+    </p>
+    {% if client_profile.profile_image %}
+      <img src="{{ client_profile.profile_image.url }}"
+           alt="Zdjęcie profilowe"
+           width="150">
+    {% endif %}
+    <p>
+      <a href="{% url 'clients:client-profile-update' %}">Edytuj profil</a>
+    </p>
+    <p>
+      <a href="{% url 'home' %}">Strona główna</a>
+    </p>
+  </body>
+</html>
