@@ -125,3 +125,20 @@ class ClientProfileFormTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("first_name", form.errors)
+
+    def test_form_does_not_expose_sensitive_user_fields(self):
+        form = ClientProfileForm(instance=self.client_profile)
+
+        forbidden_fields = (
+            "email",
+            "role",
+            "password",
+            "is_staff",
+            "is_superuser",
+            "user_permissions",
+            "groups",
+        )
+
+        for field in forbidden_fields:
+            with self.subTest(field=field):
+                self.assertNotIn(field, form.fields)
