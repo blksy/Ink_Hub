@@ -165,3 +165,48 @@ class ClientProfileUpdateViewTests(TestCase):
         response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 404)
+
+    def test_user_cannot_update_another_client_profile(self):
+        other_user = User.objects.create_user(
+            email="adam@example.com",
+            password="TestPassword123!",
+            first_name="Adam",
+            last_name="Nowak",
+            role=User.Role.CLIENT,
+        )
+
+        other_profile = ClientProfile.objects.create(
+            user=other_user,
+            phone_number="111222333",
+        )
+
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("clients:client-profile-update"),
+            data={
+                "first_name": "Zmodyfikowany",
+                "last_name": "Klient",
+                "phone_number": "999888777",
+                "user": other_user.pk,
+                "id": other_profile.pk,
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+
+        other_user.refresh_from_db()
+        other_profile.refresh_from_db()
+
+        self.assertEqual(other_user.first_name, "Adam")
+        self.assertEqual(other_user.last_name, "Nowak")
+        self.assertEqual(other_profile.phone_number, "111222333")
+        self.user.refresh_from_db()
+        self.client_profile.refresh_from_db()
+
+        self.assertEqual(self.user.first_name, "Zmodyfikowany")
+        self.assertEqual(self.user.last_name, "Klient")
+        self.assertEqual(
+            self.client_profile.phone_number,
+            "999888777",
+        )

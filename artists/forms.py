@@ -104,6 +104,7 @@ class PortfolioItemForm(forms.ModelForm):
         self.professional = professional
 
         self.fields["studio"].required = False
+        
         self.fields["studio"].empty_label = "Bez przypisanego studia"
 
         self.fields["service"].empty_label = "Brak powiązanej usługi"

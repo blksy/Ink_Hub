@@ -2,6 +2,9 @@
 from django.conf import settings
 from django.db import models
 
+from common.validators import MaxFileSizeValidator, validate_image_format,MaxImageDimensionsValidator
+
+
 class ClientProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -13,6 +16,7 @@ class ClientProfile(models.Model):
         upload_to="clients/profile_images/",
         blank=True,
         null=True,
+        validators=[MaxFileSizeValidator(5), validate_image_format, MaxImageDimensionsValidator(4096, 4096)],
     )
 
     phone_number = models.CharField(

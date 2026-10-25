@@ -8,8 +8,11 @@ from decimal import Decimal
 from datetime import timedelta
 from django.utils import timezone
 
+from common.validators import MaxFileSizeValidator, validate_image_format, MaxImageDimensionsValidator
+
 def default_invitation_expiry():  
     return timezone.now() + timedelta(days=7)
+
 
 class Studio(models.Model):
     name = models.CharField(max_length=150)
@@ -19,6 +22,7 @@ class Studio(models.Model):
         upload_to="studios/logos/",
         blank=True,
         null=True,
+        validators=[MaxFileSizeValidator(5), validate_image_format, MaxImageDimensionsValidator(4096,4096)],
     )
 
     categories = models.ManyToManyField(
