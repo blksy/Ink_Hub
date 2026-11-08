@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import FormView
+from django.views.generic import FormView, TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect
 from .factories import UserFactory
@@ -34,3 +35,6 @@ class UserLoginView(LoginView):
 
 class UserLogoutView(LogoutView):
     pass
+
+class AccountDashboardView(LoginRequiredMixin, TemplateView):
+    template_name = "users/dashboard.html"
