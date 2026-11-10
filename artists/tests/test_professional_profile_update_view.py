@@ -7,6 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from artists.models import Category, ProfessionalProfile, TattooStyle
+from common.tests.utils import create_test_image
 
 
 User = get_user_model()
@@ -182,15 +183,10 @@ class ProfessionalProfileUpdateViewTests(TestCase):
         )
 
     def test_professional_can_update_profile_image(self):
-        image = SimpleUploadedFile(
-            name="profile.gif",
-            content=(
-                b"GIF87a\x01\x00\x01\x00\x80\x01\x00"
-                b"\x00\x00\x00ccc,\x00\x00\x00\x00"
-                b"\x01\x00\x01\x00\x00\x02\x02D\x01\x00;"
-            ),
-            content_type="image/gif",
-        )
+        image = create_test_image(
+            name="profile.png",
+            color="blue",
+       )
 
         with tempfile.TemporaryDirectory() as temp_dir:
             with override_settings(MEDIA_ROOT=temp_dir):

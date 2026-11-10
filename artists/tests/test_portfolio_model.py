@@ -9,6 +9,7 @@ from artists.models import (
     Category,
     Service,
 )
+from common.tests.utils import create_test_image
 
 
 User = get_user_model()
@@ -146,17 +147,18 @@ class PortfolioItemModelTests(TestCase):
         portfolio_item = PortfolioItem(
             professional_profile=self.profile,
             service=self.service,
-            image="test.jpg",
+            image=create_test_image(),
         )
 
         portfolio_item.full_clean()    
 
         self.assertEqual(portfolio_item.service, self.service)
 
+  
     def test_portfolio_item_can_exist_without_service(self):
         portfolio_item = PortfolioItem(
             professional_profile=self.profile,
-            image="test.jpg",
+            image=create_test_image(),
         )
 
         portfolio_item.full_clean()
@@ -168,7 +170,7 @@ class PortfolioItemModelTests(TestCase):
             professional_profile=self.profile,
             service=self.service,
             title="Portfolio work",
-            image="test.jpg",
+            image=create_test_image(),
         )
 
         portfolio_item.full_clean()
