@@ -134,5 +134,6 @@ AUTH_USER_MODEL = "users.User"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+LOGIN_URL = "users:login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "users:login"

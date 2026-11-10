@@ -16,6 +16,8 @@
           {% if user.role == "PROFESSIONAL" %}
             <a href="{% url 'professionals:professional-detail' user.professional_profile.pk %}">Moje konto</a>
             <a href="{% url 'studios:my-invitations' %}">Moje zaproszenia</a>
+          {% elif user.role == "CLIENT" %}
+            <a href="{% url 'clients:client-profile' %}">Moje konto</a>
           {% endif %}
           <form method="post" action="{% url 'users:logout' %}">
             {% csrf_token %}
@@ -49,7 +51,7 @@
         <article>
           <h3>Specjaliści</h3>
           <p>Odkrywaj profesjonalistów i ich portfolio.</p>
-          <a href="{% url 'home' %}">Zobacz specjalistów</a>
+          <a href="{% url 'professionals:professional-list' %}">Zobacz specjalistów</a>
         </article>
       </section>
     </main>

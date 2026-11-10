@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.core.validators import MinValueValidator
 
+from common.validators import MaxFileSizeValidator, validate_image_format, MaxImageDimensionsValidator
+
 
 class TattooStyle(models.Model):
     name = models.CharField(
@@ -59,6 +61,7 @@ class ProfessionalProfile(models.Model):
         upload_to="professionals/profile_images/",
         blank=True,
         null=True,
+        validators=[MaxFileSizeValidator(5), validate_image_format, MaxImageDimensionsValidator(4096, 4096)],
     )
 
     categories = models.ManyToManyField(
@@ -108,6 +111,7 @@ class PortfolioItem(models.Model):
 
     image = models.ImageField(
         upload_to="professionals/portfolio/",
+        validators=[MaxFileSizeValidator(20),validate_image_format, MaxImageDimensionsValidator(8000, 8000)]
     )
 
     description = models.TextField(

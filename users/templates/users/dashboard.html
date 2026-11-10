@@ -1,0 +1,10 @@
+<h1>Moje konto</h1>
+<p>Witaj, {{ request.user.email }}</p>
+{% if request.user.client_profile %}
+  <a href="{% url 'clients:client-profile' %}">Mój profil klienta</a>
+{% else %}
+  <form method="post" action="{% url 'clients:client-profile-activate' %}">
+    {% csrf_token %}
+    <button type="submit">Aktywuj profil klienta</button>
+  </form>
+{% endif %}
