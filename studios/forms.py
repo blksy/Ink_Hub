@@ -24,6 +24,7 @@ class StudioForm(forms.ModelForm):
             "styles": "Oferowane style tatuażu",
         }
 
+
 class StudioInvitationForm(forms.ModelForm):
     class Meta:
         model = StudioInvitation
@@ -96,12 +97,11 @@ class StudioMembershipRoleForm(forms.ModelForm):
 
 
 class EmployeeServiceForm(forms.ModelForm):
-    membership =  forms.ModelChoiceField(
+    membership = forms.ModelChoiceField(
         queryset=StudioMembership.objects.none(),
         required=False,
         label="Pracownik",
     )
-
 
     class Meta:
         model = EmployeeService
@@ -112,18 +112,27 @@ class EmployeeServiceForm(forms.ModelForm):
             "is_active",
         )
 
-    def __init__(self, *args,  studio, actor_membership, **kwargs):
+    def __init__(
+        self,
+        *args,
+        studio,
+        actor_membership,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
-        is_update = self.instance.pk is not None
+        self.studio = studio
+        self.actor_membership = actor_membership
 
-        self.fields["service"].queryset = studio.services.filter(
-            is_active=True,
-        )
+        is_update = self.instance.pk is not None
 
         is_manager = actor_membership.role in (
             StudioMembership.Role.OWNER,
             StudioMembership.Role.MANAGER,
+        )
+
+        self.fields["service"].queryset = studio.services.filter(
+            is_active=True,
         )
 
         if is_update:
@@ -140,3 +149,24 @@ class EmployeeServiceForm(forms.ModelForm):
 
         else:
             self.fields.pop("membership")
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        if (
+            self.actor_membership.studio_id != self.studio.pk
+            or self.actor_membership.status
+            != StudioMembership.Status.ACTIVE
+        ):
+            raise ValidationError(
+                "Nie masz uprawnień do zarządzania "
+                "usługami w tym studiu."
+            )
+
+        if self.instance.pk:
+            if self.instance.membership.studio_id != self.studio.pk:
+                raise ValidationError(
+                    "Ta usługa nie należy do wskazanego studia."
+                )
+
+        return cleaned_data
