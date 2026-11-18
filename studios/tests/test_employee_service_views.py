@@ -48,9 +48,27 @@ class EmployeeServiceViewTests(TestCase):
             name="Gentlemen Barber",
             location="Poznań",
         )
+
         cls.other_studio = Studio.objects.create(
             name="Other Barber",
             location="Warszawa",
+        )
+
+        cls.manager = User.objects.create_user(
+            email="manager@example.com",
+            password="testpass123",
+            role=User.Role.PROFESSIONAL,
+        )
+        
+        cls.manager_profile = ProfessionalProfile.objects.create(
+            user=cls.manager,
+        )
+        
+        cls.manager_membership = StudioMembership.objects.create(
+            studio=cls.studio,
+            professional=cls.manager_profile,
+            role=StudioMembership.Role.MANAGER,
+            status=StudioMembership.Status.ACTIVE,
         )
 
         cls.studio.categories.add(cls.category)
@@ -61,11 +79,13 @@ class EmployeeServiceViewTests(TestCase):
             professional=cls.owner_profile,
             role=StudioMembership.Role.OWNER,
         )
+        
         cls.employee_membership = StudioMembership.objects.create(
             studio=cls.studio,
             professional=cls.employee_profile,
             role=StudioMembership.Role.EMPLOYEE,
         )
+
         cls.other_membership = StudioMembership.objects.create(
             studio=cls.other_studio,
             professional=cls.other_profile,
@@ -79,6 +99,7 @@ class EmployeeServiceViewTests(TestCase):
             price=Decimal("80.00"),
             duration_minutes=45,
         )
+
         cls.other_service = Service.objects.create(
             studio=cls.other_studio,
             category=cls.category,
@@ -93,11 +114,18 @@ class EmployeeServiceViewTests(TestCase):
             price=Decimal("90.00"),
             duration_minutes=50,
         )
+
         cls.other_employee_service = EmployeeService.objects.create(
             membership=cls.other_membership,
             service=cls.other_service,
             price=Decimal("130.00"),
             duration_minutes=60,
+        )
+
+        cls.employee_other_membership = StudioMembership.objects.create(
+            studio=cls.other_studio,
+            professional=cls.employee_profile,
+            role=StudioMembership.Role.MANAGER,
         )
 
     def detail_url(self, studio=None):
@@ -297,4 +325,117 @@ class EmployeeServiceViewTests(TestCase):
         self.assertEqual(
             self.employee_service.service,
             self.service,
+        )
+
+    
+    def test_manager_can_edit_employee_service(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(
+            self.update_url(),
+            {
+                "price": "180.00",
+                "duration_minutes": 90,
+                "is_active": "on",
+           },
+        )
+
+        self.assertRedirects(
+            response,
+            self.detail_url(),
+        )
+    
+        self.employee_service.refresh_from_db()
+
+        self.assertEqual(
+            self.employee_service.price,
+            Decimal("180.00"),
+        )
+
+        self.assertEqual(
+            self.employee_service.duration_minutes,
+            90,
+        )
+
+    
+    def test_employee_can_create_own_service(self):
+        new_service = Service.objects.create(
+            studio=self.studio,
+            category=self.category,
+            name="Strzyżenie brody",
+            price=Decimal("50.00"),
+            duration_minutes=30,
+        )
+
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            self.create_url(),
+            {
+                "membership": self.owner_membership.pk,
+                "service": new_service.pk,
+                "price": "60.00",
+                "duration_minutes": 35,
+                "is_active": "on",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            self.detail_url(),
+        )
+
+        employee_service = EmployeeService.objects.get(
+            service=new_service,
+        )
+
+        self.assertEqual(
+            employee_service.membership,
+            self.employee_membership,
+        )
+
+        self.assertEqual(
+            employee_service.price,
+            Decimal("60.00"),
+        )
+
+        self.assertEqual(
+            employee_service.duration_minutes,
+            35,
+        )
+
+        self.assertEqual(
+            EmployeeService.objects.filter(
+                membership=self.owner_membership,
+                service=new_service,
+            ).count(),
+            0,
+        )
+    
+    def test_manager_role_in_other_studio_does_not_grant_permissions(self):
+        owner_service = EmployeeService.objects.create(
+            membership=self.owner_membership,
+            service=self.service,
+            price=Decimal("100.00"),
+            duration_minutes=60,
+        )
+
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            self.update_url(employee_service=owner_service),
+            {
+                "price": "999.00",
+                "duration_minutes": 120,
+                "is_active": "on",
+            },
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+        owner_service.refresh_from_db()
+
+        self.assertEqual(
+            owner_service.price,
+            Decimal("100.00"),
         )
