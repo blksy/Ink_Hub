@@ -1,4 +1,4 @@
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.http import HttpResponseForbidden
 from django.urls import reverse
 from django.core.exceptions import PermissionDenied
@@ -103,13 +103,18 @@ class StudioDetailView(DetailView):
         if not can_manage_studio:
             if current_membership:
                 employee_services = employee_services.filter(
-                    models.Q(is_active=True)
+                    (
+                        models.Q(is_active=True)
+                        & models.Q(service__is_active=True)
+                    )
                     | models.Q(membership=current_membership)
                 )
             else:
                 employee_services = employee_services.filter(
                     is_active=True,
-                )
+                    service__is_active=True,
+            )
+                
         portfolio_items = PortfolioItem.objects.filter(
             studio=studio,
         ).select_related(
@@ -131,6 +136,7 @@ class StudioDetailView(DetailView):
         })
 
         return context
+
 
 class StudioUpdateView(ProfessionalRequiredMixin,  StudioManagementRequiredMixin, UpdateView):
     model = Studio
@@ -263,8 +269,8 @@ class EmployeeServiceCreateView(
         is_manager = self.studio_membership.role in (
             StudioMembership.Role.OWNER,
             StudioMembership.Role.MANAGER,
-       )
-
+        )
+    
         if is_manager:
             target_membership = form.cleaned_data["membership"]
         else:
@@ -273,7 +279,7 @@ class EmployeeServiceCreateView(
         service = form.cleaned_data["service"]
 
         already_exists = EmployeeService.objects.filter(
-           membership=target_membership,
+            membership=target_membership,
             service=service,
         ).exists()
 
@@ -286,7 +292,18 @@ class EmployeeServiceCreateView(
 
         employee_service = form.save(commit=False)
         employee_service.membership = target_membership
-        employee_service.save()
+
+        try:
+            with transaction.atomic():
+                employee_service.save()
+
+        except IntegrityError:
+            form.add_error(
+                "service",
+                "Nie udało się dodać usługi. "
+                "Sprawdź, czy nie została już przypisana.",
+            )
+            return self.form_invalid(form)
 
         return redirect(
             "studios:studio-detail",
