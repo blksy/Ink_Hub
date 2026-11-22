@@ -74,3 +74,57 @@ class WorkingHours(models.Model):
             f"{self.get_weekday_display()} "
             f"({self.start_time} - {self.end_time})"
         )
+
+
+class TimeOff (models.Model):
+    membership = models.ForeignKey(
+         "studios.StudioMembership",
+         on_delete=models.CASCADE,
+         related_name="time_off",
+    )
+
+    start_at = models.DateTimeField()
+
+    end_at = models.DateTimeField()
+
+    reason = models.CharField(
+        max_length=255,
+        blank=True, 
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    def clean(self):
+        super().clean()
+
+        if self.start_at is not None and self.end_at is not None and self.start_at >= self.end_at:
+            raise ValidationError({
+                "end_at": "End time must be after start time."
+            })
+        if (
+            not self.membership_id
+            or self.start_at is None
+            or self.end_at is None
+        ):
+            return
+
+        conflicting_time_offs = TimeOff.objects.filter(
+            membership_id=self.membership_id,
+            start_at__lt=self.end_at,
+            end_at__gt=self.start_at,
+        ).exclude(pk=self.pk)
+
+        if conflicting_time_offs.exists():
+            raise ValidationError({
+                "start_at": (
+                    "Time off overlaps with an existing absence."
+                )
+            })
+
+        def __str__(self):
+            return (
+                f"{self.membership.professional} - "
+                f" - {self.start_at} to {self.end_at}"
+            )
